@@ -1,6 +1,6 @@
-// ===== Edamam Recipe Search (client-only demo) =====
+// ===== Meal Planner — Frontend (uses Vercel /api/recipes proxy) =====
 const CONFIG = {
-  PROXY_BASE: '',   // same-origin: calls /api/edamam on your Vercel site
+  PROXY_BASE: "",   // same-origin; leave "" on Vercel
   MAX_RESULTS: 60
 };
 
@@ -23,46 +23,43 @@ function mapDiet(d) {
   return ({ "Balanced":"balanced", "Low-Carb":"low-carb", "Low-Fat":"low-fat" }[d]) || "";
 }
 function mapSpecToHealth(s) {
-  return ({ "vegan":"vegan", "vegetarian":"vegetarian", "alcohol-free":"alcohol-free", "peanut-free":"peanut-free" }[s]) || "";
+  return ({
+    "vegan":"vegan",
+    "vegetarian":"vegetarian",
+    "alcohol-free":"alcohol-free",
+    "peanut-free":"peanut-free"
+  }[s]) || "";
 }
 
-// ------- Edamam query & fetch -------
-function buildQuery({ q, perMealCalories, diet, health, cuisine, timeRange }) {
+// ------- Build URL for our PROXY (/api/recipes) -------
+function buildProxyQuery({ q, perMealCalories, diet, health, cuisine, timeRange }) {
   const params = new URLSearchParams({
-    type: "public",
-    q: q || "meal",
-    app_id: CONFIG.APP_ID,
-    app_key: CONFIG.APP_KEY,
-    imageSize: "REGULAR",
+    q: q || "recipe",
     from: "0",
     to: String(CONFIG.MAX_RESULTS),
     random: "true"
   });
 
   if (Number.isFinite(perMealCalories)) {
-    params.append("calories", `${Math.max(100, perMealCalories - 120)}-${perMealCalories + 120}`);
+    // server converts this to a range
+    params.set("perMealCalories", String(perMealCalories));
   }
+  if (diet)      params.set("diet", diet);
+  if (health)    params.set("health", health);
+  if (cuisine)   params.set("cuisine", cuisine);
+  if (timeRange) params.set("timeRange", timeRange);
 
-  [
-    "label","image","url","yield",
-    "ingredientLines","calories","totalNutrients",
-    "dietLabels","healthLabels","totalTime"
-  ].forEach(f => params.append("field", f));
-
-  if (diet)     params.append("diet", diet);
-  if (health)   params.append("health", health);
-  if (cuisine)  params.append("cuisineType", cuisine);
-  if (timeRange) params.append("time", timeRange);
-
-  return `https://api.edamam.com/api/recipes/v2?${params.toString()}`;
+  return `${CONFIG.PROXY_BASE}/api/recipes?${params.toString()}`;
 }
 
 async function fetchPool(opts) {
-  const url = buildQuery(opts);
-  const res = await fetch(url, { headers: { "Edamam-Account-User": CONFIG.USER_ID } });
-  const text = await res.text().catch(() => "");
-  if (!res.ok) throw new Error(`Edamam ${res.status}: ${text || res.statusText}`);
-  const data = JSON.parse(text);
+  const url = buildProxyQuery(opts);
+  const res = await fetch(url);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = data?.error || res.statusText || `Server ${res.status}`;
+    throw new Error(msg);
+  }
   return (data.hits || []).map(h => h.recipe);
 }
 
@@ -78,8 +75,8 @@ function gPerServing(recipe, key) {
   return Math.round(qty / servings);
 }
 function macroChipsHTML(recipe) {
-  const macro = (label, grams) => `
-    <span class="chip"><span class="chip__dot"></span>${label}: ${grams}g</span>`;
+  const macro = (label, grams) =>
+    `<span class="chip"><span class="chip__dot"></span>${label}: ${grams}g</span>`;
   return `
     <div class="macros">
       ${macro("Carbs",  gPerServing(recipe,"CHOCDF"))}
@@ -107,7 +104,7 @@ function buildWeeklyPlan(recipes, mealsPerDay) {
   return grid;
 }
 function renderTable(grid) {
-  const thead = `<thead><tr><th>Meal</th>${["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d=>`<th>${d}</th>`).join("")}</tr></thead>`;
+  const thead = `<thead><tr><th>Meal</th>${WEEKDAYS.map(d=>`<th>${d}</th>`).join("")}</tr></thead>`;
   const tbody = `<tbody>${
     grid.map((row, rIdx) => `
       <tr>
@@ -150,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
     form.reset();
     resultsEl.innerHTML = "";
     setStatus("");
-    calChip.textContent = "Daily calories: —";
+    if (calChip) calChip.textContent = "Daily calories: —";
     window.scrollTo({ top: 0, behavior: "smooth" });
     $('age')?.focus();
   }
@@ -176,7 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const dailyCalories = calcDailyCalories({ gender, weight, height, age, activity });
-    calChip.textContent = `Daily calories: ${dailyCalories} kcal`;
+    if (calChip) calChip.textContent = `Daily calories: ${dailyCalories} kcal`;
 
     const perMeal = Math.round(dailyCalories / meals);
     const diet = mapDiet(dietPreference);
@@ -200,7 +197,10 @@ document.addEventListener("DOMContentLoaded", () => {
         cuisine: cuisine || "",
         timeRange: timeRange || ""
       });
-      if (!pool.length) { setStatus("No recipes matched. Try a different 'Quick recipes' option or relax filters."); return; }
+      if (!pool.length) {
+        setStatus("No recipes matched. Try a different 'Quick recipes' option or relax filters.");
+        return;
+      }
       const grid = buildWeeklyPlan(pool, meals);
       resultsEl.innerHTML = renderTable(grid);
     } catch (err) {
