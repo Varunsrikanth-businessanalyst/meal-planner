@@ -1,56 +1,26 @@
-// ===== Config =====
+// ===== Edamam Recipe Search (client-only demo) =====
 const CONFIG = {
   APP_ID: "2befcb23",
   APP_KEY: "8f23abc226368ff9c39b71b668e43349",
-  USER_ID: "Vaarun",        // Edamam username (case-sensitive)
-  MAX_RESULTS: 60,
-  RETRIES: 3,
-  RETRY_BASE_MS: 900
+  USER_ID: "Vaarun",   // your Edamam account username (case-sensitive)
+  MAX_RESULTS: 60
 };
 
 const WEEKDAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const $ = (id) => document.getElementById(id);
 
-// cuisine list (value: what Edamam expects; label: UI text)
-const CUISINES = [
-  {value:"any", label:"Any"},
-  {value:"american", label:"American"},
-  {value:"asian", label:"Asian"},
-  {value:"british", label:"British"},
-  {value:"caribbean", label:"Caribbean"},
-  {value:"central europe", label:"Central Europe"},
-  {value:"chinese", label:"Chinese"},
-  {value:"eastern europe", label:"Eastern Europe"},
-  {value:"french", label:"French"},
-  {value:"indian", label:"Indian"},
-  {value:"italian", label:"Italian"},
-  {value:"japanese", label:"Japanese"},
-  {value:"mediterranean", label:"Mediterranean"},
-  {value:"mexican", label:"Mexican"},
-  {value:"middle eastern", label:"Middle Eastern"},
-  {value:"nordic", label:"Nordic"},
-  {value:"south american", label:"South American"},
-  {value:"south east asian", label:"South East Asian"},
-  {value:"world", label:"World"},
-];
-
-// ----- conversions -----
-const kgToLb = (kg) => kg * 2.2046226218;
-const lbToKg = (lb) => lb / 2.2046226218;
-const ftInToCm = (ft, inches) => ((Number(ft)||0) * 12 + (Number(inches)||0)) * 2.54;
-
-// ----- calories -----
-function calcBMR({ gender, weightKg, heightCm, age }) {
+// ------- Calorie math (Harris–Benedict) -------
+function calcBMR({ gender, weight, height, age }) {
   return (gender === "male")
-    ? 88.362 + 13.397*weightKg + 4.799*heightCm - 5.677*age
-    : 447.593 +  9.247*weightKg + 3.098*heightCm - 4.330*age;
+    ? 88.362 + 13.397*weight + 4.799*height - 5.677*age
+    : 447.593 +  9.247*weight + 3.098*height - 4.330*age;
 }
-function calcDailyCalories({ gender, weightKg, heightCm, age, activity }) {
-  const bmr = calcBMR({ gender, weightKg, heightCm, age });
+function calcDailyCalories({ gender, weight, height, age, activity }) {
+  const bmr = calcBMR({ gender, weight, height, age });
   return Math.round(bmr * activity);
 }
 
-// ----- mappings -----
+// ------- Map UI to Edamam params -------
 function mapDiet(d) {
   return ({ "Balanced":"balanced", "Low-Carb":"low-carb", "Low-Fat":"low-fat" }[d]) || "";
 }
@@ -58,28 +28,8 @@ function mapSpecToHealth(s) {
   return ({ "vegan":"vegan", "vegetarian":"vegetarian", "alcohol-free":"alcohol-free", "peanut-free":"peanut-free" }[s]) || "";
 }
 
-// ----- fetch with retry -----
-async function fetchWithRetry(url, opts, onRetry) {
-  let attempt = 0;
-  while (true) {
-    attempt++;
-    const res = await fetch(url, opts).catch(() => null);
-    if (res && res.ok) return res;
-
-    const status = res ? res.status : "network";
-    const retryable = status === 429 || (typeof status === "number" && status >= 500 && status < 600);
-    if (!retryable || attempt >= CONFIG.RETRIES) {
-      if (res) return res;
-      throw new Error("Network error");
-    }
-    const delay = CONFIG.RETRY_BASE_MS * Math.pow(2, attempt - 1);
-    onRetry?.(attempt, delay, status);
-    await new Promise(r => setTimeout(r, delay));
-  }
-}
-
-// ----- query builder -----
-function buildQuery({ q, perMealCalories, diet, health, cuisines }) {
+// ------- Edamam query & fetch -------
+function buildQuery({ q, perMealCalories, diet, health, cuisine }) {
   const params = new URLSearchParams({
     type: "public",
     q: q || "meal",
@@ -90,39 +40,35 @@ function buildQuery({ q, perMealCalories, diet, health, cuisines }) {
     to: String(CONFIG.MAX_RESULTS),
     random: "true"
   });
-
   if (Number.isFinite(perMealCalories)) {
     params.append("calories", `${Math.max(100, perMealCalories - 120)}-${perMealCalories + 120}`);
   }
-
-  ["label","image","url","yield","ingredientLines","calories","totalNutrients","dietLabels","healthLabels"]
-    .forEach(f => params.append("field", f));
+  // fields we actually use
+  [
+    "label","image","url","yield",
+    "ingredientLines","calories","totalNutrients",
+    "dietLabels","healthLabels"
+  ].forEach(f => params.append("field", f));
 
   if (diet)   params.append("diet", diet);
   if (health) params.append("health", health);
-
-  if (Array.isArray(cuisines) && cuisines.length) {
-    cuisines.forEach(c => params.append("cuisineType", c));
-  }
+  if (cuisine) params.append("cuisineType", cuisine); // <- NEW
 
   return `https://api.edamam.com/api/recipes/v2?${params.toString()}`;
 }
 
-async function fetchPool(opts, setStatus) {
+async function fetchPool(opts) {
   const url = buildQuery(opts);
-  const res = await fetchWithRetry(url, {
+  const res = await fetch(url, {
     headers: { "Edamam-Account-User": CONFIG.USER_ID }
-  }, (attempt, delay, status) => {
-    setStatus?.(`API busy (status ${status}). Retrying ${attempt}/${CONFIG.RETRIES - 1} in ${Math.round(delay/1000)}s…`);
   });
-
   const text = await res.text().catch(() => "");
-  if (!res.ok) throw new Error(text || res.statusText || `HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`Edamam ${res.status}: ${text || res.statusText}`);
   const data = JSON.parse(text);
   return (data.hits || []).map(h => h.recipe);
 }
 
-// ----- macros helpers -----
+// ------- helpers for macros -------
 function kcalPerServing(recipe) {
   const servings = Math.max(1, recipe.yield || 1);
   return Math.round((recipe.calories || 0) / servings);
@@ -134,12 +80,135 @@ function gPerServing(recipe, key) {
   return Math.round(qty / servings);
 }
 function macroChipsHTML(recipe) {
-  const macro = (label, grams) =>
-    `<span class="chip"><span class="chip__dot"></span>${label}: ${grams}g</span>`;
+  const macro = (label, grams) => `
+    <span class="chip"><span class="chip__dot"></span>${label}: ${grams}g</span>`;
   return `
     <div class="macros">
       ${macro("Carbs",  gPerServing(recipe,"CHOCDF"))}
       ${macro("Protein",gPerServing(recipe,"PROCNT"))}
       ${macro("Fat",    gPerServing(recipe,"FAT"))}
       ${macro("Fiber",  gPerServing(recipe,"FIBTG"))}
-      ${macro("Sugar", 
+      ${macro("Sugar",  gPerServing(recipe,"SUGAR"))}
+    </div>`;
+}
+
+// ------- results rendering -------
+function ingredientsHTML(list, max = 6) {
+  const items = (list || []).slice(0, max).map(x => `<li>${x}</li>`).join("");
+  return `<ul style="margin:6px 0 0 18px;">${items}</ul>`;
+}
+function buildWeeklyPlan(recipes, mealsPerDay) {
+  const grid = Array.from({ length: mealsPerDay }, () => Array(7).fill(null));
+  let i = 0;
+  for (let r = 0; r < mealsPerDay; r++) {
+    for (let c = 0; c < 7; c++) {
+      grid[r][c] = recipes[i % recipes.length];
+      i++;
+    }
+  }
+  return grid;
+}
+function renderTable(grid) {
+  const thead = `<thead><tr><th>Meal</th>${WEEKDAYS.map(d=>`<th>${d}</th>`).join("")}</tr></thead>`;
+  const tbody = `<tbody>${
+    grid.map((row, rIdx) => `
+      <tr>
+        <td>Meal ${rIdx+1}</td>
+        ${row.map(rec => `
+          <td style="min-width:220px;">
+            <div style="font-weight:700;margin-bottom:4px;">
+              <a href="${rec.url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:#ffffff;">
+                ${rec.label}
+              </a>
+            </div>
+            <img class="recipe" src="${rec.image}" alt="${rec.label}" />
+            <div style="margin:6px 0 4px; font-size:13px; color:#e5e7eb;">
+              ~${kcalPerServing(rec)} kcal/serving
+            </div>
+            ${macroChipsHTML(rec)}
+            ${ingredientsHTML(rec.ingredientLines)}
+          </td>`).join("")}
+      </tr>
+    `).join("")
+  }</tbody>`;
+  return `<table>${thead}${tbody}</table>`;
+}
+
+// ------- main -------
+document.addEventListener("DOMContentLoaded", () => {
+  const form = $('meal-form');
+  const statusEl = $('status');
+  const resultsEl = $('results');
+  const calChip = $('cal-output');
+
+  const setStatus = (msg) => {
+    if (!statusEl) return;
+    if (!msg) { statusEl.textContent = ""; statusEl.classList.remove("show"); return; }
+    statusEl.textContent = msg;
+    statusEl.classList.add("show");
+  };
+
+  // Soft reset: clear form + UI without reloading
+  function resetAll() {
+    const formEl = $('meal-form');
+    const results = $('results');
+    const status = $('status');
+    const cal = $('cal-output');
+
+    formEl.reset();
+    results.innerHTML = "";
+    if (status) { status.textContent = ""; status.classList.remove("show"); }
+    if (cal) cal.textContent = "Daily calories: —";
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    const first = $('age');
+    if (first) first.focus();
+  }
+
+  const titleBtn = $('home-reset');
+  if (titleBtn) titleBtn.addEventListener('click', resetAll);
+
+  // Form submit → fetch & render
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const age = Number(($('age').value || "").trim());
+    const weight = Number(($('weight').value || "").trim());
+    const height = Number(($('height').value || "").trim());
+    const gender = $('gender').value;
+    const activity = Number($('activityLevel').value);
+    const meals = Number($('numOfMeals').value);
+    const dietPreference = $('dietPreference').value;
+    const healthSpec = $('healthSpec').value;
+    const cuisine = ($('cuisine').value || "").trim(); // <- NEW
+
+    if ([age, weight, height].some(x => Number.isNaN(x))) {
+      setStatus("Please fill Age, Weight and Height.");
+      return;
+    }
+
+    const dailyCalories = calcDailyCalories({ gender, weight, height, age, activity });
+    calChip.textContent = `Daily calories: ${dailyCalories} kcal`;
+
+    const perMeal = Math.round(dailyCalories / meals);
+    const diet = mapDiet(dietPreference);
+    const health = mapSpecToHealth(healthSpec);
+
+    setStatus(""); resultsEl.innerHTML = "";
+
+    try {
+      const pool = await fetchPool({
+        q: "recipe",
+        perMealCalories: perMeal,
+        diet,
+        health,
+        cuisine: cuisine || ""   // only send when chosen
+      });
+      if (!pool.length) { setStatus("No recipes matched. Try different filters."); return; }
+      const grid = buildWeeklyPlan(pool, meals);
+      resultsEl.innerHTML = renderTable(grid);
+    } catch (err) {
+      setStatus(err.message || "Something went wrong.");
+    }
+  });
+});
