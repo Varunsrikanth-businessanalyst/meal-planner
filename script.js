@@ -1,7 +1,7 @@
 // ===== Edamam Recipe Search (client-only demo) =====
 const CONFIG = {
-  APP_ID: "f2e0b522",
-  APP_KEY: "5f170ee4d248a029807749c667f14e7a",
+  APP_ID: "2befcb23",
+  APP_KEY: "8f23abc226368ff9c39b71b668e43349",
   MAX_RESULTS: 60
 };
 
@@ -44,22 +44,18 @@ function buildQuery({ q, perMealCalories, diet, health }) {
     app_id: CONFIG.APP_ID,
     app_key: CONFIG.APP_KEY,
     imageSize: "REGULAR",
-    field: "label",
-    field: "image",
-    field: "ingredientLines",
-    field: "calories",
-    field: "totalWeight",
-    field: "dietLabels",
-    field: "healthLabels",
     calories: `${Math.max(100, perMealCalories - 120)}-${perMealCalories + 120}`,
     random: "true",
     from: "0",
     to: String(CONFIG.MAX_RESULTS)
   });
+  ["label","image","ingredientLines","calories","totalWeight","dietLabels","healthLabels"]
+    .forEach(f => params.append("field", f));
   if (diet) params.append("diet", diet);
   if (health) params.append("health", health);
   return `https://api.edamam.com/api/recipes/v2?${params.toString()}`;
 }
+
 
 async function fetchPool(opts) {
   const res = await fetch(buildQuery(opts));
