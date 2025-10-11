@@ -1,9 +1,9 @@
 // ===== Edamam Recipe Search (client-only demo) =====
-// TODO: set USER_ID to your EXACT Edamam account email (or user id)
+// Keep these exactly as you have them working already.
 const CONFIG = {
   APP_ID: "2befcb23",
   APP_KEY: "8f23abc226368ff9c39b71b668e43349",
-  USER_ID: "Vaarun",
+  USER_ID: "Vaarun", // your Edamam account *username* (case-sensitive)
   MAX_RESULTS: 60
 };
 
@@ -44,8 +44,10 @@ function buildQuery({ q, perMealCalories, diet, health }) {
   if (Number.isFinite(perMealCalories)) {
     params.append("calories", `${Math.max(100, perMealCalories - 120)}-${perMealCalories + 120}`);
   }
-  ["label","image","ingredientLines","calories","totalWeight","dietLabels","healthLabels"]
+  // include url & yield so we can link and compute kcal/serving
+  ["label","image","url","yield","ingredientLines","calories","totalWeight","dietLabels","healthLabels"]
     .forEach(f => params.append("field", f));
+
   if (diet) params.append("diet", diet);
   if (health) params.append("health", health);
   return `https://api.edamam.com/api/recipes/v2?${params.toString()}`;
@@ -57,19 +59,22 @@ async function fetchPool(opts) {
     headers: { "Edamam-Account-User": CONFIG.USER_ID }
   });
   const text = await res.text().catch(() => "");
-  if (!res.ok) {
-    // show full message from Edamam to help debugging
-    throw new Error(`Edamam ${res.status}: ${text || res.statusText}`);
-  }
+  if (!res.ok) throw new Error(`Edamam ${res.status}: ${text || res.statusText}`);
   const data = JSON.parse(text);
   return (data.hits || []).map(h => h.recipe);
 }
 
-// ------- Render weekly table -------
+// ------- Render weekly table (titles are links + kcal/serving) -------
+function kcalPerServing(recipe) {
+  const servings = Math.max(1, recipe.yield || 1);
+  return Math.round((recipe.calories || 0) / servings);
+}
+
 function ingredientsHTML(list, max = 6) {
   const items = (list || []).slice(0, max).map(x => `<li>${x}</li>`).join("");
   return `<ul style="margin:6px 0 0 18px;">${items}</ul>`;
 }
+
 function buildWeeklyPlan(recipes, mealsPerDay) {
   const grid = Array.from({ length: mealsPerDay }, () => Array(7).fill(null));
   let i = 0;
@@ -81,6 +86,7 @@ function buildWeeklyPlan(recipes, mealsPerDay) {
   }
   return grid;
 }
+
 function renderTable(grid) {
   const thead = `<thead><tr><th style="text-align:left;">Meal</th>${WEEKDAYS.map(d=>`<th>${d}</th>`).join("")}</tr></thead>`;
   const tbody = `<tbody>${
@@ -88,9 +94,16 @@ function renderTable(grid) {
       <tr>
         <td style="font-weight:700;">Meal ${rIdx+1}</td>
         ${row.map(rec => `
-          <td style="min-width:180px;vertical-align:top;">
-            <div style="font-weight:700;margin-bottom:4px;">${rec.label}</div>
-            <img class="recipe" src="${rec.image}" alt="${rec.label}" />
+          <td style="min-width:220px;vertical-align:top;">
+            <div style="font-weight:700;margin-bottom:4px;">
+              <a href="${rec.url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:#0f172a;">
+                ${rec.label}
+              </a>
+            </div>
+            <img class="recipe" src="${rec.image}" alt="${rec.label}" style="width:100%;height:auto;border-radius:10px;border:1px solid #e5e7eb;margin:6px 0;" />
+            <div style="margin:6px 0 4px; font-size:13px; color:#475569;">
+              ~${kcalPerServing(rec)} kcal/serving
+            </div>
             ${ingredientsHTML(rec.ingredientLines)}
           </td>`).join("")}
       </tr>
