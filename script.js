@@ -1,8 +1,6 @@
 // ===== Edamam Recipe Search (client-only demo) =====
 const CONFIG = {
-  APP_ID: "2befcb23",
-  APP_KEY: "8f23abc226368ff9c39b71b668e43349",
-  USER_ID: "Vaarun", // your Edamam account username (case-sensitive)
+  PROXY_BASE: '',   // same-origin: calls /api/edamam on your Vercel site
   MAX_RESULTS: 60
 };
 
