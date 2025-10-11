@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Meal Plan Generator</title>
-  <link href="./styles.css?v=6" rel="stylesheet" />
+  <link href="./styles.css?v=7" rel="stylesheet" />
 </head>
 <body>
   <main class="wrap">
@@ -97,19 +97,8 @@
           </select>
         </label>
 
-        <!-- NEW Row 5: Quick recipes (dropdown, full width) -->
-        <label class="field field--span2">
-          <span>Quick recipes</span>
-          <select id="quickSelect">
-            <option value="" selected>Off (no time filter)</option>
-            <option value="10">10-minute recipes</option>
-            <option value="20">20-minute recipes</option>
-            <option value="30+">30+ minute recipes</option>
-          </select>
-        </label>
-
-        <!-- Row 6 -->
-        <label class="field field--span2">
+        <!-- Row 5 (two halves): Health Specification | Quick recipes -->
+        <label class="field">
           <span>Health Specification</span>
           <select id="healthSpec" required>
             <option value="vegan">Vegan</option>
@@ -117,6 +106,16 @@
             <option value="non-vegetarian" selected>Non-vegetarian</option>
             <option value="alcohol-free">Alcohol-free</option>
             <option value="peanut-free">Peanut-free</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Quick recipes</span>
+          <select id="quickSelect">
+            <option value="none" selected>No Time</option>
+            <option value="10">10 mins recipes</option>
+            <option value="20">20 mins recipes</option>
+            <option value="30+">30+ mins recipes</option>
           </select>
         </label>
 
@@ -131,6 +130,6 @@
     </section>
   </main>
 
-  <script src="./script.js?v=13"></script>
+  <script src="./script.js?v=14"></script>
 </body>
 </html>
