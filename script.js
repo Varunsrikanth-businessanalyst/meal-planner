@@ -1,5 +1,4 @@
 // ===== Edamam Recipe Search (client-only demo) =====
-// Your keys (public in client — OK for demo):
 const CONFIG = {
   APP_ID: "f2e0b522",
   APP_KEY: "5f170ee4d248a029807749c667f14e7a",
@@ -7,46 +6,37 @@ const CONFIG = {
 };
 
 const WEEKDAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-const $ = (id) => document.getElementById(id);
 
-// --- 1) Calorie math (Harris–Benedict like in your screenshot) ---
-function calcBMR({ gender, weight, height, age }) {
-  // weight kg, height cm, age years
-  if (gender === 'male') {
-    // BMR = 88.362 + (13.397 × weight) + (4.799 × height) − (5.677 × age)
-    return 88.362 + 13.397*weight + 4.799*height - 5.677*age;
-  } else {
-    // BMR = 447.593 + (9.247 × weight) + (3.098 × height) − (4.330 × age)
-    return 447.593 + 9.247*weight + 3.098*height - 4.330*age;
+// ------- DOM helpers (safe with fallback IDs) -------
+const el = (id) => document.getElementById(id);
+const val = (idList) => {
+  for (const id of idList) {
+    const node = el(id);
+    if (node) return node.value;
   }
+  return null;
+};
+
+// ------- Calorie math (Harris–Benedict) -------
+function calcBMR({ gender, weight, height, age }) {
+  return (gender === "male")
+    ? 88.362 + 13.397*weight + 4.799*height - 5.677*age
+    : 447.593 +  9.247*weight + 3.098*height - 4.330*age;
 }
 function calcDailyCalories({ gender, weight, height, age, activity }) {
   const bmr = calcBMR({ gender, weight, height, age });
   return Math.round(bmr * activity);
 }
 
-// --- 2) Map UI choices to Edamam params ---
-function mapSpecToHealth(spec) {
-  const m = {
-    "vegan": "vegan",
-    "vegetarian": "vegetarian",
-    "non-vegetarian": "",         // no health filter
-    "alcohol-free": "alcohol-free",
-    "peanut-free": "peanut-free"
-  };
-  return m[spec] || "";
+// ------- Map UI to Edamam params -------
+function mapDiet(d) {
+  return ({ "Balanced":"balanced", "Low-Carb":"low-carb", "Low-Fat":"low-fat" }[d]) || "";
 }
-function mapDiet(diet) {
-  // Edamam diet params: balanced, low-carb, low-fat, high-protein
-  const m = {
-    "Balanced": "balanced",
-    "Low-Carb": "low-carb",
-    "Low-Fat": "low-fat"
-  };
-  return m[diet] || "";
+function mapSpecToHealth(s) {
+  return ({ "vegan":"vegan", "vegetarian":"vegetarian", "alcohol-free":"alcohol-free", "peanut-free":"peanut-free" }[s]) || "";
 }
 
-// --- 3) Edamam fetch helpers ---
+// ------- Edamam fetch -------
 function buildQuery({ q, perMealCalories, diet, health }) {
   const params = new URLSearchParams({
     type: "public",
@@ -70,15 +60,15 @@ function buildQuery({ q, perMealCalories, diet, health }) {
   if (health) params.append("health", health);
   return `https://api.edamam.com/api/recipes/v2?${params.toString()}`;
 }
+
 async function fetchPool(opts) {
-  const url = buildQuery(opts);
-  const res = await fetch(url);
+  const res = await fetch(buildQuery(opts));
   if (!res.ok) throw new Error(`Edamam error ${res.status}`);
   const data = await res.json();
   return (data.hits || []).map(h => h.recipe);
 }
 
-// --- 4) Weekly table rendering ---
+// ------- Render weekly table -------
 function ingredientsHTML(list, max = 6) {
   const items = (list || []).slice(0, max).map(x => `<li>${x}</li>`).join("");
   return `<ul style="margin:6px 0 0 18px;">${items}</ul>`;
@@ -95,65 +85,73 @@ function buildWeeklyPlan(recipes, mealsPerDay) {
   return grid;
 }
 function renderTable(grid) {
-  const thead = `
-    <thead>
+  const thead = `<thead><tr><th style="text-align:left;">Meal</th>${WEEKDAYS.map(d=>`<th>${d}</th>`).join("")}</tr></thead>`;
+  const tbody = `<tbody>${
+    grid.map((row, rIdx) => `
       <tr>
-        <th style="text-align:left;">Meal</th>
-        ${WEEKDAYS.map(d=>`<th>${d}</th>`).join("")}
+        <td style="font-weight:700;">Meal ${rIdx+1}</td>
+        ${row.map(rec => `
+          <td style="min-width:180px;vertical-align:top;">
+            <div style="font-weight:700;margin-bottom:4px;">${rec.label}</div>
+            <img src="${rec.image}" alt="${rec.label}" style="width:100%;height:auto;border-radius:10px;border:1px solid #e5e7eb;margin:6px 0;" />
+            ${ingredientsHTML(rec.ingredientLines)}
+          </td>`).join("")}
       </tr>
-    </thead>`;
-  const tbody = `
-    <tbody>
-      ${grid.map((row, rIdx) => `
-        <tr>
-          <td style="font-weight:700;">Meal ${rIdx+1}</td>
-          ${row.map(rec => `
-            <td style="min-width:180px;">
-              <div style="font-weight:700;margin-bottom:4px;">${rec.label}</div>
-              <img class="recipe" src="${rec.image}" alt="${rec.label}" />
-              ${ingredientsHTML(rec.ingredientLines)}
-            </td>
-          `).join("")}
-        </tr>
-      `).join("")}
-    </tbody>`;
+    `).join("")
+  }</tbody>`;
   return `<table>${thead}${tbody}</table>`;
 }
 
-// --- 5) Main submit handler ---
-document.getElementById('meal-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const age = Number(($('age').value || "").trim());
-  const weight = Number(($('weight').value || "").trim());
-  const height = Number(($('height').value || "").trim());
-  const gender = $('gender').value;
-  const activity = Number($('activityLevel').value);
-  const meals = Number($('numOfMeals').value);
-  const dietPreference = $('dietPreference').value;
-  const healthSpec = $('healthSpec').value;
+// ------- Main submit handler -------
+document.addEventListener("DOMContentLoaded", () => {
+  const form = el("meal-form");
+  const statusEl = el("status") || { textContent: "" };
+  const resultsEl = el("results") || { innerHTML: "" };
+  const calChip = el("cal-output") || { textContent: "" };
 
-  // 1) calories via Harris–Benedict (as in your screenshot)
-  const dailyCalories = calcDailyCalories({ gender, weight, height, age, activity });
-  $('cal-output').textContent = `Daily calories: ${dailyCalories} kcal`;
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-  // 2) per-meal target and Edamam filters
-  const perMeal = Math.round(dailyCalories / meals);
-  const diet = mapDiet(dietPreference);
-  const health = mapSpecToHealth(healthSpec);
+    // Read values; support both old and new ID names
+    const age = Number((val(["age"]) || "").trim());
+    const weight = Number((val(["weight"]) || "").trim());
+    const height = Number((val(["height"]) || "").trim());
+    const gender = val(["gender"]) || "male";
+    const activity = Number(val(["activityLevel"])) || 1.2;
 
-  $('status').textContent = `Fetching recipes near ~${perMeal} kcal per meal…`;
-  $('results').innerHTML = "";
+    const meals = Number(val(["numOfMeals","meals"])) || 3;
+    const dietPreference = val(["dietPreference","diet"]) || "Balanced";
+    const healthSpec = val(["healthSpec","health"]) || "non-vegetarian";
 
-  try {
-    const pool = await fetchPool({ q: "recipe", perMealCalories: perMeal, diet, health });
-    if (!pool.length) {
-      $('status').textContent = "No recipes found for your filters. Try changing options.";
+    // Guard against missing fields
+    if ([age, weight, height].some(x => Number.isNaN(x))) {
+      statusEl.textContent = "Please fill Age, Weight, and Height.";
       return;
     }
-    const grid = buildWeeklyPlan(pool, meals);
-    $('results').innerHTML = renderTable(grid);
-    $('status').textContent = "Done.";
-  } catch (err) {
-    $('status').textContent = `Error: ${err.message}`;
-  }
+
+    // 1) calories
+    const dailyCalories = calcDailyCalories({ gender, weight, height, age, activity });
+    calChip.textContent = `Daily calories: ${dailyCalories} kcal`;
+
+    // 2) per-meal & filters
+    const perMeal = Math.round(dailyCalories / meals);
+    const diet = mapDiet(dietPreference);
+    const health = mapSpecToHealth(healthSpec);
+
+    statusEl.textContent = `Fetching recipes near ~${perMeal} kcal per meal…`;
+    resultsEl.innerHTML = "";
+
+    try {
+      const pool = await fetchPool({ q: "recipe", perMealCalories: perMeal, diet, health });
+      if (!pool.length) {
+        statusEl.textContent = "No recipes found for your filters. Try different options.";
+        return;
+      }
+      const grid = buildWeeklyPlan(pool, meals);
+      resultsEl.innerHTML = renderTable(grid);
+      statusEl.textContent = "Done.";
+    } catch (err) {
+      statusEl.textContent = `Error: ${err.message}`;
+    }
+  });
 });
