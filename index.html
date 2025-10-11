@@ -6,7 +6,7 @@
   <title>Meal Plan Generator</title>
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background:#0f172a; color:#e2e8f0; }
-    .container { max-width: 720px; margin: 0 auto; padding: 24px; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
     h1 { margin: 0 0 16px; font-size: 28px; }
     .card { background:#111827; border:1px solid #1f2937; border-radius: 14px; padding: 16px; }
     .row { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -19,8 +19,11 @@
     .mt-3 { margin-top: 12px; }
     .mt-4 { margin-top: 16px; }
     .mt-6 { margin-top: 24px; }
-    .result { background:#0b1220; border:1px dashed #334155; border-radius: 14px; padding: 16px; min-height: 80px; }
-    @media (max-width: 640px){ .row { grid-template-columns: 1fr; } }
+    .result { background:#0b1220; border:1px dashed #334155; border-radius: 14px; padding: 16px; min-height: 80px; overflow:auto; }
+    @media (max-width: 800px){ .row { grid-template-columns: 1fr; } }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border-bottom: 1px solid #334155; }
+    th { font-weight: 700; color:#cbd5e1; }
   </style>
 </head>
 <body>
@@ -67,17 +70,7 @@
         <!-- Calories -->
         <div class="mt-3">
           <label for="calories">Calories (per day)</label>
-          <input
-            id="calories"
-            name="calories"
-            type="number"
-            min="800"
-            max="5000"
-            step="50"
-            placeholder="e.g., 2100"
-            required
-            inputmode="numeric"
-          />
+          <input id="calories" name="calories" type="number" min="800" max="5000" step="50" placeholder="e.g., 2100" required />
         </div>
 
         <!-- Generate Button -->
@@ -87,29 +80,13 @@
       </form>
     </section>
 
-    <!-- Results placeholder (fill via JS later) -->
     <section class="mt-6">
-      <h2 style="font-size:18px; margin:0 0 10px;">Your Meal Plan</h2>
-      <div id="results" class="result" aria-live="polite">
-        <!-- Generated plan will appear here -->
-      </div>
+      <h2 style="font-size:18px; margin:0 0 10px;">Weekly Plan</h2>
+      <div id="results" class="result" aria-live="polite"></div>
     </section>
   </main>
 
-  <!-- Optional: hook up JS later to handle form submission and render a plan -->
-  <!--
-  <script>
-    document.getElementById('meal-form').addEventListener('submit', function(e){
-      e.preventDefault();
-      // Read values and generate a plan
-      // const meals = document.getElementById('meals').value;
-      // const diet = document.getElementById('diet').value;
-      // const health = document.getElementById('health').value;
-      // const calories = Number(document.getElementById('calories').value);
-      // document.getElementById('results').textContent = '...render plan here...';
-    });
-  </script>
-  -->
+  <!-- App JS -->
+  <script src="./script.js"></script>
 </body>
 </html>
-
