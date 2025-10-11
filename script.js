@@ -11,6 +11,29 @@ const CONFIG = {
 const WEEKDAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const $ = (id) => document.getElementById(id);
 
+// cuisine list (value: what Edamam expects; label: UI text)
+const CUISINES = [
+  {value:"any", label:"Any"},
+  {value:"american", label:"American"},
+  {value:"asian", label:"Asian"},
+  {value:"british", label:"British"},
+  {value:"caribbean", label:"Caribbean"},
+  {value:"central europe", label:"Central Europe"},
+  {value:"chinese", label:"Chinese"},
+  {value:"eastern europe", label:"Eastern Europe"},
+  {value:"french", label:"French"},
+  {value:"indian", label:"Indian"},
+  {value:"italian", label:"Italian"},
+  {value:"japanese", label:"Japanese"},
+  {value:"mediterranean", label:"Mediterranean"},
+  {value:"mexican", label:"Mexican"},
+  {value:"middle eastern", label:"Middle Eastern"},
+  {value:"nordic", label:"Nordic"},
+  {value:"south american", label:"South American"},
+  {value:"south east asian", label:"South East Asian"},
+  {value:"world", label:"World"},
+];
+
 // ----- conversions -----
 const kgToLb = (kg) => kg * 2.2046226218;
 const lbToKg = (lb) => lb / 2.2046226218;
@@ -38,7 +61,6 @@ function mapSpecToHealth(s) {
 // ----- fetch with retry -----
 async function fetchWithRetry(url, opts, onRetry) {
   let attempt = 0;
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     attempt++;
     const res = await fetch(url, opts).catch(() => null);
@@ -120,173 +142,4 @@ function macroChipsHTML(recipe) {
       ${macro("Protein",gPerServing(recipe,"PROCNT"))}
       ${macro("Fat",    gPerServing(recipe,"FAT"))}
       ${macro("Fiber",  gPerServing(recipe,"FIBTG"))}
-      ${macro("Sugar",  gPerServing(recipe,"SUGAR"))}
-    </div>`;
-}
-
-// ----- render -----
-function ingredientsHTML(list, max = 6) {
-  const items = (list || []).slice(0, max).map(x => `<li>${x}</li>`).join("");
-  return `<ul style="margin:6px 0 0 18px;">${items}</ul>`;
-}
-function buildWeeklyPlan(recipes, mealsPerDay) {
-  const grid = Array.from({ length: mealsPerDay }, () => Array(7).fill(null));
-  let i = 0;
-  for (let r = 0; r < mealsPerDay; r++) {
-    for (let c = 0; c < 7; c++) {
-      grid[r][c] = recipes[i % recipes.length];
-      i++;
-    }
-  }
-  return grid;
-}
-function renderTable(grid) {
-  const thead = `<thead><tr><th>Meal</th>${WEEKDAYS.map(d=>`<th>${d}</th>`).join("")}</tr></thead>`;
-  const tbody = `<tbody>${
-    grid.map((row, rIdx) => `
-      <tr>
-        <td>Meal ${rIdx+1}</td>
-        ${row.map(rec => `
-          <td style="min-width:220px;">
-            <div style="font-weight:700;margin-bottom:4px;">
-              <a href="${rec.url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:#ffffff;">
-                ${rec.label}
-              </a>
-            </div>
-            <img class="recipe" src="${rec.image}" alt="${rec.label}" />
-            <div style="margin:6px 0 4px; font-size:13px; color:#e5e7eb;">
-              ~${kcalPerServing(rec)} kcal/serving
-            </div>
-            ${macroChipsHTML(rec)}
-            ${ingredientsHTML(rec.ingredientLines)}
-          </td>`).join("")}
-      </tr>
-    `).join("")
-  }</tbody>`;
-  return `<table>${thead}${tbody}</table>`;
-}
-
-// ----- main -----
-document.addEventListener("DOMContentLoaded", () => {
-  const form = $('meal-form');
-  const statusEl = $('status');
-  const resultsEl = $('results');
-  const calChip = $('cal-output');
-
-  const setStatus = (msg) => {
-    if (!statusEl) return;
-    if (!msg) { statusEl.textContent = ""; statusEl.classList.remove("show"); return; }
-    statusEl.textContent = msg; statusEl.classList.add("show");
-  };
-
-  function resetAll() {
-    form.reset();
-    resultsEl.innerHTML = "";
-    setStatus("");
-    calChip.textContent = "Daily calories: —";
-    // reset weight unit to kg, keep entered number as-is (assume kg)
-    setWeightUnit('kg', true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    $('age').focus();
-  }
-  $('home-reset')?.addEventListener('click', resetAll);
-
-  // --- weight toggle (kg/lb) ---
-  let weightUnit = 'kg';
-  function setWeightUnit(unit, force=false) {
-    if (!force && unit === weightUnit) return;
-    const w = $('weight');
-    const val = Number(w.value);
-    if (!Number.isNaN(val) && val > 0) {
-      w.value = unit === 'kg' ? Math.round(lbToKg(val) * 10)/10
-                              : Math.round(kgToLb(val) * 10)/10;
-    }
-    weightUnit = unit;
-    document.querySelectorAll('[data-wu]').forEach(btn => {
-      btn.classList.toggle('is-active', btn.dataset.wu === unit);
-    });
-  }
-  document.querySelectorAll('[data-wu]').forEach(btn => {
-    btn.addEventListener('click', () => setWeightUnit(btn.dataset.wu));
-  });
-  setWeightUnit('kg', true);
-
-  // --- cuisine selection rules (Any + max 5) ---
-  const cuisineEl = $('cuisine');
-  cuisineEl.addEventListener('change', () => {
-    const selected = Array.from(cuisineEl.selectedOptions).map(o => o.value);
-    if (selected.includes('any')) {
-      // keep only 'any'
-      Array.from(cuisineEl.options).forEach(opt => opt.selected = (opt.value === 'any'));
-      return;
-    }
-    // deselect 'any' if any other chosen
-    Array.from(cuisineEl.options).forEach(opt => {
-      if (opt.value === 'any') opt.selected = false;
-    });
-    // cap at 5
-    if (selected.length > 5) {
-      // unselect the last one user tried to add
-      const last = selected[selected.length - 1];
-      const opt = Array.from(cuisineEl.options).find(o => o.value === last);
-      if (opt) opt.selected = false;
-    }
-  });
-
-  // --- submit ---
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const age = Number(($('age').value || "").trim());
-
-    // weight to kg
-    let weightKg = Number(($('weight').value || "").trim());
-    if (weightUnit === 'lb') weightKg = lbToKg(weightKg);
-
-    // height to cm (from ft/in)
-    const ft = Number(($('height-ft').value || "").trim());
-    const inches = Number(($('height-in').value || "").trim());
-    const heightCm = ftInToCm(ft, inches);
-
-    const gender = $('gender').value;
-    const activity = Number($('activityLevel').value);
-    const meals = Number($('numOfMeals').value);
-    const dietPreference = $('dietPreference').value;
-    const healthSpec = $('healthSpec').value;
-
-    // cuisines (Any → none)
-    let cuisines = Array.from(cuisineEl.selectedOptions).map(o => o.value);
-    if (cuisines.includes('any')) cuisines = [];
-
-    if ([age, weightKg, heightCm].some(x => Number.isNaN(x) || x <= 0)) {
-      setStatus("Please provide valid Age, Weight and Height.");
-      return;
-    }
-
-    const dailyCalories = calcDailyCalories({ gender, weightKg, heightCm, age, activity });
-    calChip.textContent = `Daily calories: ${dailyCalories} kcal`;
-
-    const perMeal = Math.round(dailyCalories / meals);
-    const diet = mapDiet(dietPreference);
-    const health = mapSpecToHealth(healthSpec);
-
-    setStatus(""); resultsEl.innerHTML = "";
-
-    try {
-      const pool = await fetchPool({
-        q: "recipe",
-        perMealCalories: perMeal,
-        diet,
-        health,
-        cuisines
-      }, setStatus);
-
-      if (!pool.length) { setStatus("No recipes matched. Try relaxing filters or cuisines."); return; }
-      const grid = buildWeeklyPlan(pool, meals);
-      resultsEl.innerHTML = renderTable(grid);
-      setStatus("");
-    } catch (err) {
-      setStatus(err.message || "Something went wrong.");
-    }
-  });
-});
+      ${macro("Sugar", 
