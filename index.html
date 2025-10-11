@@ -4,19 +4,18 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Meal Plan Generator</title>
-  <!-- bump the version number whenever you change CSS to avoid caching -->
-  <link href="./styles.css?v=3" rel="stylesheet" />
+  <link href="./styles.css?v=4" rel="stylesheet" />
 </head>
 <body>
   <main class="wrap">
     <section class="card">
       <header class="card__header">
-        <!-- Clickable title: soft-resets the app (no page reload) -->
         <button id="home-reset" class="title-link" type="button">Meal Plan Generator</button>
         <span id="cal-output" class="pill">Daily calories: —</span>
       </header>
 
       <form id="meal-form" class="form">
+        <!-- Row 1 -->
         <label class="field">
           <span>Age</span>
           <input id="age" type="number" min="12" max="90" placeholder="24" required />
@@ -27,6 +26,7 @@
           <input id="weight" type="number" min="40" max="200" placeholder="70" required />
         </label>
 
+        <!-- Row 2 -->
         <label class="field">
           <span>Height (cm)</span>
           <input id="height" type="number" min="120" max="230" placeholder="175" required />
@@ -40,7 +40,8 @@
           </select>
         </label>
 
-        <label class="field field--span2">
+        <!-- Row 3: Activity Level (left) + Cuisine (right) -->
+        <label class="field">
           <span>Activity Level</span>
           <select id="activityLevel" required>
             <option value="1.2">Sedentary (little or no exercise)</option>
@@ -51,6 +52,33 @@
           </select>
         </label>
 
+        <label class="field">
+          <span>Cuisine</span>
+          <select id="cuisine">
+            <option value="">Any</option>
+            <option value="american">American</option>
+            <option value="asian">Asian</option>
+            <option value="british">British</option>
+            <option value="caribbean">Caribbean</option>
+            <option value="central europe">Central Europe</option>
+            <option value="chinese">Chinese</option>
+            <option value="eastern europe">Eastern Europe</option>
+            <option value="french">French</option>
+            <option value="indian">Indian</option>
+            <option value="italian">Italian</option>
+            <option value="japanese">Japanese</option>
+            <option value="kosher">Kosher</option>
+            <option value="mediterranean">Mediterranean</option>
+            <option value="mexican">Mexican</option>
+            <option value="middle eastern">Middle Eastern</option>
+            <option value="nordic">Nordic</option>
+            <option value="south american">South American</option>
+            <option value="south east asian">South East Asian</option>
+            <option value="world">World</option>
+          </select>
+        </label>
+
+        <!-- Row 4 -->
         <label class="field">
           <span>Number of Meals</span>
           <select id="numOfMeals" required>
@@ -69,6 +97,7 @@
           </select>
         </label>
 
+        <!-- Row 5 -->
         <label class="field">
           <span>Health Specification</span>
           <select id="healthSpec" required>
@@ -80,6 +109,9 @@
           </select>
         </label>
 
+        <div class="field"></div> <!-- spacer to keep grid aligned -->
+
+        <!-- Row 6: actions -->
         <div class="actions field--span2">
           <button type="submit" class="btn">Generate Meal Plan</button>
           <span id="status" class="status" role="status" aria-live="polite"></span>
@@ -90,6 +122,6 @@
     </section>
   </main>
 
-  <script src="./script.js?v=10"></script>
+  <script src="./script.js?v=11"></script>
 </body>
 </html>
