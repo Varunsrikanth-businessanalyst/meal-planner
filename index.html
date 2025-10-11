@@ -4,66 +4,33 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Meal Plan Generator</title>
-  <link href="./styles.css?v=5" rel="stylesheet" />
+  <link href="./styles.css?v=4" rel="stylesheet" />
 </head>
 <body>
   <main class="wrap">
     <section class="card">
       <header class="card__header">
         <button id="home-reset" class="title-link" type="button">Meal Plan Generator</button>
-        <div class="pills">
-          <span id="goal-pill" class="pill">Goal: Maintenance</span>
-          <span id="cal-output" class="pill">Daily calories: —</span>
-        </div>
+        <span id="cal-output" class="pill">Daily calories: —</span>
       </header>
 
-      <!-- Presets -->
-      <div class="presets">
-        <button class="chip-btn" data-preset="fatloss">Fat loss</button>
-        <button class="chip-btn active" data-preset="maintenance">Maintenance</button>
-        <button class="chip-btn" data-preset="musclegain">Muscle gain</button>
-        <span class="muted tip">Presets adjust target calories and suggest meals/activity.</span>
-      </div>
-
       <form id="meal-form" class="form">
-        <!-- Row 1: Age, Weight (+units) -->
+        <!-- Row 1 -->
         <label class="field">
           <span>Age</span>
-          <input id="age" type="number" min="12" max="90" placeholder="28" required />
+          <input id="age" type="number" min="12" max="90" placeholder="24" required />
         </label>
 
-        <div class="field">
-          <div class="field__row">
-            <span>Weight</span>
-            <div class="toggle">
-              <button class="toggle__btn active" data-unit="kg" type="button">kg</button>
-              <button class="toggle__btn" data-unit="lb" type="button">lbs</button>
-            </div>
-          </div>
-          <input id="weight" type="number" min="25" max="300" placeholder="70" required />
-        </div>
+        <label class="field">
+          <span>Weight (kg)</span>
+          <input id="weight" type="number" min="40" max="200" placeholder="70" required />
+        </label>
 
-        <!-- Row 2: Height (+units), Gender -->
-        <div class="field">
-          <div class="field__row">
-            <span>Height</span>
-            <div class="toggle">
-              <button class="toggle__btn active" data-unit="cm" type="button">cm</button>
-              <button class="toggle__btn" data-unit="ftin" type="button">ft/in</button>
-            </div>
-          </div>
-
-          <!-- metric -->
-          <input id="height-cm" type="number" min="120" max="230" placeholder="175" />
-
-          <!-- imperial -->
-          <div id="height-imperial" class="hstack hidden">
-            <input id="height-ft" type="number" min="3" max="8" placeholder="5" />
-            <span class="hstack__sep">ft</span>
-            <input id="height-in" type="number" min="0" max="11" placeholder="9" />
-            <span class="hstack__sep">in</span>
-          </div>
-        </div>
+        <!-- Row 2 -->
+        <label class="field">
+          <span>Height (cm)</span>
+          <input id="height" type="number" min="120" max="230" placeholder="175" required />
+        </label>
 
         <label class="field">
           <span>Gender</span>
@@ -73,7 +40,7 @@
           </select>
         </label>
 
-        <!-- Row 3: Activity, Cuisine (multi) -->
+        <!-- Row 3: Activity Level (left) + Cuisine (right) -->
         <label class="field">
           <span>Activity Level</span>
           <select id="activityLevel" required>
@@ -86,11 +53,9 @@
         </label>
 
         <label class="field">
-          <div class="field__row">
-            <span>Cuisine</span>
-            <span class="muted" style="font-size:12px">(pick 0–3)</span>
-          </div>
-          <select id="cuisine" multiple size="4">
+          <span>Cuisine</span>
+          <select id="cuisine">
+            <option value="">Any</option>
             <option value="american">American</option>
             <option value="asian">Asian</option>
             <option value="british">British</option>
@@ -113,7 +78,7 @@
           </select>
         </label>
 
-        <!-- Row 4: Meals, Diet -->
+        <!-- Row 4 -->
         <label class="field">
           <span>Number of Meals</span>
           <select id="numOfMeals" required>
@@ -132,7 +97,7 @@
           </select>
         </label>
 
-        <!-- Row 5: Health, Exclusions -->
+        <!-- Row 5 -->
         <label class="field">
           <span>Health Specification</span>
           <select id="healthSpec" required>
@@ -144,10 +109,7 @@
           </select>
         </label>
 
-        <label class="field">
-          <span>Exclude ingredients (comma separated)</span>
-          <input id="exclude" type="text" placeholder="mushroom, cilantro, pork" />
-        </label>
+        <div class="field"></div> <!-- spacer to keep grid aligned -->
 
         <!-- Row 6: actions -->
         <div class="actions field--span2">
@@ -157,13 +119,9 @@
       </form>
 
       <div id="results" class="results"></div>
-
-      <footer class="muted disclaimer">
-        Nutrition values are provider estimates and may vary. This tool is for information only and not medical advice.
-      </footer>
     </section>
   </main>
 
-  <script src="./script.js?v=12"></script>
+  <script src="./script.js?v=11"></script>
 </body>
 </html>
