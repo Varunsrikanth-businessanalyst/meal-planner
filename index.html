@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Meal Plan Generator</title>
-  <link href="./styles.css?v=2" rel="stylesheet" />
+  <link href="./styles.css?v=3" rel="stylesheet" />
 </head>
 <body>
   <main class="wrap">
@@ -15,31 +15,17 @@
       </header>
 
       <form id="meal-form" class="form">
-        <label class="field">
-          <span>Age</span>
-          <input id="age" type="number" min="12" max="90" placeholder="24" required />
-        </label>
-
-        <label class="field">
-          <span>Weight (kg)</span>
-          <input id="weight" type="number" min="40" max="200" placeholder="70" required />
-        </label>
-
-        <label class="field">
-          <span>Height (cm)</span>
-          <input id="height" type="number" min="120" max="230" placeholder="175" required />
-        </label>
-
-        <label class="field">
-          <span>Gender</span>
+        <label class="field"><span>Age</span><input id="age" type="number" min="12" max="90" placeholder="24" required /></label>
+        <label class="field"><span>Weight (kg)</span><input id="weight" type="number" min="40" max="200" placeholder="70" required /></label>
+        <label class="field"><span>Height (cm)</span><input id="height" type="number" min="120" max="230" placeholder="175" required /></label>
+        <label class="field"><span>Gender</span>
           <select id="gender" required>
             <option value="male" selected>Male</option>
             <option value="female">Female</option>
           </select>
         </label>
 
-        <label class="field field--span2">
-          <span>Activity Level</span>
+        <label class="field field--span2"><span>Activity Level</span>
           <select id="activityLevel" required>
             <option value="1.2">Sedentary (little or no exercise)</option>
             <option value="1.375">Lightly active (1–3 days/week)</option>
@@ -49,8 +35,7 @@
           </select>
         </label>
 
-        <label class="field">
-          <span>Number of Meals</span>
+        <label class="field"><span>Number of Meals</span>
           <select id="numOfMeals" required>
             <option value="2">Two</option>
             <option value="3" selected>Three</option>
@@ -58,8 +43,7 @@
           </select>
         </label>
 
-        <label class="field">
-          <span>Diet Preference</span>
+        <label class="field"><span>Diet Preference</span>
           <select id="dietPreference" required>
             <option value="Balanced" selected>Balanced</option>
             <option value="Low-Carb">Low-Carb</option>
@@ -67,8 +51,7 @@
           </select>
         </label>
 
-        <label class="field">
-          <span>Health Specification</span>
+        <label class="field"><span>Health Specification</span>
           <select id="healthSpec" required>
             <option value="vegan">Vegan</option>
             <option value="vegetarian">Vegetarian</option>
