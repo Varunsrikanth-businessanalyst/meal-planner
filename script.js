@@ -109,7 +109,7 @@ function buildWeeklyPlan(recipes, mealsPerDay) {
   return grid;
 }
 function renderTable(grid) {
-  const thead = `<thead><tr><th>Meal</th>${WEEKDAYS.map(d=>`<th>${d}</th>`).join("")}</tr></thead>`;
+  const thead = `<thead><tr><th>Meal</th>${["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d=>`<th>${d}</th>`).join("")}</tr></thead>`;
   const tbody = `<tbody>${
     grid.map((row, rIdx) => `
       <tr>
@@ -170,7 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const dietPreference = $('dietPreference').value;
     const healthSpec = $('healthSpec').value;
     const cuisine = ($('cuisine').value || "").trim();
-    const quick = $('quickSelect').value; // "", "10", "20", "30+"
+    const quick = $('quickSelect').value; // "none" | "10" | "20" | "30+"
 
     if ([age, weight, height].some(x => Number.isNaN(x))) {
       setStatus("Please fill Age, Weight and Height.");
@@ -184,11 +184,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const diet = mapDiet(dietPreference);
     const health = mapSpecToHealth(healthSpec);
 
-    // Map quick selection -> time range
+    // Map quick selection -> Edamam 'time' range
     let timeRange = "";
     if (quick === "10") timeRange = "1-10";
     else if (quick === "20") timeRange = "1-20";
-    else if (quick === "30+") timeRange = "30-180"; // safe "30+"
+    else if (quick === "30+") timeRange = "30-180";
+    // "none" => no time filter
 
     setStatus(""); resultsEl.innerHTML = "";
 
