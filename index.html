@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Meal Plan Generator</title>
-  <link href="./styles.css?v=4" rel="stylesheet" />
+  <link href="./styles.css?v=5" rel="stylesheet" />
 </head>
 <body>
   <main class="wrap">
@@ -97,7 +97,7 @@
           </select>
         </label>
 
-        <!-- Row 5 -->
+        <!-- Row 5: Health (left) + Quick recipes (full-width below Diet) -->
         <label class="field">
           <span>Health Specification</span>
           <select id="healthSpec" required>
@@ -109,7 +109,25 @@
           </select>
         </label>
 
-        <div class="field"></div> <!-- spacer to keep grid aligned -->
+        <div class="field"></div><!-- spacer -->
+
+        <!-- Quick recipes control (full width) -->
+        <div class="field field--span2">
+          <span class="label-inline">Cooking speed</span>
+          <div class="quick-wrap">
+            <button id="quick-btn" class="btn-ghost" type="button" aria-haspopup="menu" aria-expanded="false">
+              Quick recipes
+            </button>
+            <div id="quick-menu" class="menu" role="menu" aria-labelledby="quick-btn">
+              <button class="menu__item" data-time="10" role="menuitem">10-minute recipes</button>
+              <button class="menu__item" data-time="20" role="menuitem">20-minute recipes</button>
+              <button class="menu__item" data-time="30+" role="menuitem">30+ minute recipes</button>
+              <div class="menu__sep"></div>
+              <button class="menu__item -muted" data-time="" role="menuitem">Clear</button>
+            </div>
+            <span id="quick-caption" class="muted small"></span>
+          </div>
+        </div>
 
         <!-- Row 6: actions -->
         <div class="actions field--span2">
@@ -122,6 +140,6 @@
     </section>
   </main>
 
-  <script src="./script.js?v=11"></script>
+  <script src="./script.js?v=12"></script>
 </body>
 </html>
