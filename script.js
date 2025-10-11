@@ -1,28 +1,22 @@
-// ===== Edamam Recipe Search (client-only demo) =====
+// ===== Config =====
 const CONFIG = {
   APP_ID: "2befcb23",
   APP_KEY: "8f23abc226368ff9c39b71b668e43349",
-  USER_ID: "Vaarun",   // Edamam account username (case-sensitive)
+  USER_ID: "Vaarun",        // Edamam username (case-sensitive)
   MAX_RESULTS: 60,
   RETRIES: 3,
-  RETRY_BASE_MS: 900   // base backoff (exponential)
+  RETRY_BASE_MS: 900
 };
 
 const WEEKDAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const $ = (id) => document.getElementById(id);
 
-// ------- Unit conversion helpers -------
+// ----- conversions -----
 const kgToLb = (kg) => kg * 2.2046226218;
 const lbToKg = (lb) => lb / 2.2046226218;
-const cmToFtIn = (cm) => {
-  const totalIn = cm / 2.54;
-  const ft = Math.floor(totalIn / 12);
-  const inches = Math.round(totalIn - ft * 12);
-  return { ft, inches };
-};
 const ftInToCm = (ft, inches) => ((Number(ft)||0) * 12 + (Number(inches)||0)) * 2.54;
 
-// ------- Calorie math (Harris–Benedict) -------
+// ----- calories -----
 function calcBMR({ gender, weightKg, heightCm, age }) {
   return (gender === "male")
     ? 88.362 + 13.397*weightKg + 4.799*heightCm - 5.677*age
@@ -33,7 +27,7 @@ function calcDailyCalories({ gender, weightKg, heightCm, age, activity }) {
   return Math.round(bmr * activity);
 }
 
-// ------- Map UI to Edamam params -------
+// ----- mappings -----
 function mapDiet(d) {
   return ({ "Balanced":"balanced", "Low-Carb":"low-carb", "Low-Fat":"low-fat" }[d]) || "";
 }
@@ -41,32 +35,28 @@ function mapSpecToHealth(s) {
   return ({ "vegan":"vegan", "vegetarian":"vegetarian", "alcohol-free":"alcohol-free", "peanut-free":"peanut-free" }[s]) || "";
 }
 
-// ------- Fetch with backoff/retries -------
+// ----- fetch with retry -----
 async function fetchWithRetry(url, opts, onRetry) {
   let attempt = 0;
   // eslint-disable-next-line no-constant-condition
   while (true) {
     attempt++;
     const res = await fetch(url, opts).catch(() => null);
-
     if (res && res.ok) return res;
 
     const status = res ? res.status : "network";
-    const shouldRetry = status === 429 || (typeof status === "number" && status >= 500 && status < 600);
-
-    if (!shouldRetry || attempt >= CONFIG.RETRIES) {
-      if (res) return res; // final non-ok response
+    const retryable = status === 429 || (typeof status === "number" && status >= 500 && status < 600);
+    if (!retryable || attempt >= CONFIG.RETRIES) {
+      if (res) return res;
       throw new Error("Network error");
     }
-
-    // backoff
     const delay = CONFIG.RETRY_BASE_MS * Math.pow(2, attempt - 1);
     onRetry?.(attempt, delay, status);
     await new Promise(r => setTimeout(r, delay));
   }
 }
 
-// ------- Edamam query & fetch -------
+// ----- query builder -----
 function buildQuery({ q, perMealCalories, diet, health, cuisines }) {
   const params = new URLSearchParams({
     type: "public",
@@ -78,17 +68,17 @@ function buildQuery({ q, perMealCalories, diet, health, cuisines }) {
     to: String(CONFIG.MAX_RESULTS),
     random: "true"
   });
+
   if (Number.isFinite(perMealCalories)) {
     params.append("calories", `${Math.max(100, perMealCalories - 120)}-${perMealCalories + 120}`);
   }
-  [
-    "label","image","url","yield",
-    "ingredientLines","calories","totalNutrients",
-    "dietLabels","healthLabels"
-  ].forEach(f => params.append("field", f));
+
+  ["label","image","url","yield","ingredientLines","calories","totalNutrients","dietLabels","healthLabels"]
+    .forEach(f => params.append("field", f));
 
   if (diet)   params.append("diet", diet);
   if (health) params.append("health", health);
+
   if (Array.isArray(cuisines) && cuisines.length) {
     cuisines.forEach(c => params.append("cuisineType", c));
   }
@@ -101,7 +91,7 @@ async function fetchPool(opts, setStatus) {
   const res = await fetchWithRetry(url, {
     headers: { "Edamam-Account-User": CONFIG.USER_ID }
   }, (attempt, delay, status) => {
-    setStatus?.(`API limit or server busy (status ${status}). Retrying ${attempt}/${CONFIG.RETRIES - 1} in ${Math.round(delay/1000)}s…`);
+    setStatus?.(`API busy (status ${status}). Retrying ${attempt}/${CONFIG.RETRIES - 1} in ${Math.round(delay/1000)}s…`);
   });
 
   const text = await res.text().catch(() => "");
@@ -110,7 +100,7 @@ async function fetchPool(opts, setStatus) {
   return (data.hits || []).map(h => h.recipe);
 }
 
-// ------- helpers for macros -------
+// ----- macros helpers -----
 function kcalPerServing(recipe) {
   const servings = Math.max(1, recipe.yield || 1);
   return Math.round((recipe.calories || 0) / servings);
@@ -122,8 +112,8 @@ function gPerServing(recipe, key) {
   return Math.round(qty / servings);
 }
 function macroChipsHTML(recipe) {
-  const macro = (label, grams) => `
-    <span class="chip"><span class="chip__dot"></span>${label}: ${grams}g</span>`;
+  const macro = (label, grams) =>
+    `<span class="chip"><span class="chip__dot"></span>${label}: ${grams}g</span>`;
   return `
     <div class="macros">
       ${macro("Carbs",  gPerServing(recipe,"CHOCDF"))}
@@ -134,7 +124,7 @@ function macroChipsHTML(recipe) {
     </div>`;
 }
 
-// ------- results rendering -------
+// ----- render -----
 function ingredientsHTML(list, max = 6) {
   const items = (list || []).slice(0, max).map(x => `<li>${x}</li>`).join("");
   return `<ul style="margin:6px 0 0 18px;">${items}</ul>`;
@@ -176,7 +166,7 @@ function renderTable(grid) {
   return `<table>${thead}${tbody}</table>`;
 }
 
-// ------- main -------
+// ----- main -----
 document.addEventListener("DOMContentLoaded", () => {
   const form = $('meal-form');
   const statusEl = $('status');
@@ -186,30 +176,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const setStatus = (msg) => {
     if (!statusEl) return;
     if (!msg) { statusEl.textContent = ""; statusEl.classList.remove("show"); return; }
-    statusEl.textContent = msg;
-    statusEl.classList.add("show");
+    statusEl.textContent = msg; statusEl.classList.add("show");
   };
 
-  // Soft reset: clear form + UI without reloading
   function resetAll() {
-    $('meal-form').reset();
-    $('results').innerHTML = "";
+    form.reset();
+    resultsEl.innerHTML = "";
     setStatus("");
     calChip.textContent = "Daily calories: —";
-    // Reset units to defaults (kg/cm)
+    // reset weight unit to kg, keep entered number as-is (assume kg)
     setWeightUnit('kg', true);
-    setHeightUnit('cm', true);
     window.scrollTo({ top: 0, behavior: "smooth" });
     $('age').focus();
   }
-
-  // Title as "start over"
   $('home-reset')?.addEventListener('click', resetAll);
 
-  // ----- Unit toggles -----
+  // --- weight toggle (kg/lb) ---
   let weightUnit = 'kg';
-  let heightUnit = 'cm';
-
   function setWeightUnit(unit, force=false) {
     if (!force && unit === weightUnit) return;
     const w = $('weight');
@@ -219,75 +202,51 @@ document.addEventListener("DOMContentLoaded", () => {
                               : Math.round(kgToLb(val) * 10)/10;
     }
     weightUnit = unit;
-    // UI buttons
     document.querySelectorAll('[data-wu]').forEach(btn => {
       btn.classList.toggle('is-active', btn.dataset.wu === unit);
     });
   }
-  function setHeightUnit(unit, force=false) {
-    if (!force && unit === heightUnit) return;
-    const cmInput = $('height');
-    const ftinWrap = $('height-ftin');
-    const ftInput = $('height-ft');
-    const inInput = $('height-in');
-
-    if (unit === 'ftin') {
-      // convert cm -> ft/in if cm present
-      const cmVal = Number(cmInput.value);
-      if (!Number.isNaN(cmVal) && cmVal > 0) {
-        const { ft, inches } = cmToFtIn(cmVal);
-        ftInput.value = ft;
-        inInput.value = inches;
-      }
-      cmInput.classList.add('hidden');
-      ftinWrap.classList.remove('hidden');
-    } else {
-      // convert ft/in -> cm if ft/in present
-      const ft = Number(ftInput.value);
-      const inches = Number(inInput.value);
-      if ((!Number.isNaN(ft) && ft > 0) || (!Number.isNaN(inches) && inches >= 0)) {
-        cmInput.value = Math.round(ftInToCm(ft, inches));
-      }
-      ftinWrap.classList.add('hidden');
-      cmInput.classList.remove('hidden');
-    }
-    heightUnit = unit;
-    document.querySelectorAll('[data-hu]').forEach(btn => {
-      btn.classList.toggle('is-active', btn.dataset.hu === unit);
-    });
-  }
-
-  // bind toggle buttons
   document.querySelectorAll('[data-wu]').forEach(btn => {
     btn.addEventListener('click', () => setWeightUnit(btn.dataset.wu));
   });
-  document.querySelectorAll('[data-hu]').forEach(btn => {
-    btn.addEventListener('click', () => setHeightUnit(btn.dataset.hu));
+  setWeightUnit('kg', true);
+
+  // --- cuisine selection rules (Any + max 5) ---
+  const cuisineEl = $('cuisine');
+  cuisineEl.addEventListener('change', () => {
+    const selected = Array.from(cuisineEl.selectedOptions).map(o => o.value);
+    if (selected.includes('any')) {
+      // keep only 'any'
+      Array.from(cuisineEl.options).forEach(opt => opt.selected = (opt.value === 'any'));
+      return;
+    }
+    // deselect 'any' if any other chosen
+    Array.from(cuisineEl.options).forEach(opt => {
+      if (opt.value === 'any') opt.selected = false;
+    });
+    // cap at 5
+    if (selected.length > 5) {
+      // unselect the last one user tried to add
+      const last = selected[selected.length - 1];
+      const opt = Array.from(cuisineEl.options).find(o => o.value === last);
+      if (opt) opt.selected = false;
+    }
   });
 
-  // default to metric UI
-  setWeightUnit('kg', true);
-  setHeightUnit('cm', true);
-
-  // Form submit → fetch & render
+  // --- submit ---
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const age = Number(($('age').value || "").trim());
 
-    // Weight in kg regardless of unit
+    // weight to kg
     let weightKg = Number(($('weight').value || "").trim());
     if (weightUnit === 'lb') weightKg = lbToKg(weightKg);
 
-    // Height in cm regardless of unit
-    let heightCm;
-    if (heightUnit === 'cm') {
-      heightCm = Number(($('height').value || "").trim());
-    } else {
-      const ft = Number(($('height-ft').value || "").trim());
-      const inches = Number(($('height-in').value || "").trim());
-      heightCm = ftInToCm(ft, inches);
-    }
+    // height to cm (from ft/in)
+    const ft = Number(($('height-ft').value || "").trim());
+    const inches = Number(($('height-in').value || "").trim());
+    const heightCm = ftInToCm(ft, inches);
 
     const gender = $('gender').value;
     const activity = Number($('activityLevel').value);
@@ -295,8 +254,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const dietPreference = $('dietPreference').value;
     const healthSpec = $('healthSpec').value;
 
-    // cuisines (multi)
-    const cuisines = Array.from($('cuisine').selectedOptions).map(o => o.value);
+    // cuisines (Any → none)
+    let cuisines = Array.from(cuisineEl.selectedOptions).map(o => o.value);
+    if (cuisines.includes('any')) cuisines = [];
 
     if ([age, weightKg, heightCm].some(x => Number.isNaN(x) || x <= 0)) {
       setStatus("Please provide valid Age, Weight and Height.");
