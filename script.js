@@ -141,12 +141,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const resultsEl = $('results');
   const calChip = $('cal-output');
 
-  // Quick recipes state
-  const quickBtn = $('quick-btn');
-  const quickMenu = $('quick-menu');
-  const quickCaption = $('quick-caption');
-  let quickChoice = ""; // "", "10", "20", "30+"
-
   const setStatus = (msg) => {
     if (!statusEl) return;
     if (!msg) { statusEl.textContent = ""; statusEl.classList.remove("show"); return; }
@@ -154,59 +148,16 @@ document.addEventListener("DOMContentLoaded", () => {
     statusEl.classList.add("show");
   };
 
-  // Quick dropdown handlers
-  function openQuickMenu() {
-    quickMenu.classList.add('show');
-    quickBtn.setAttribute('aria-expanded', 'true');
-    document.addEventListener('click', onOutsideQuick, { once: true });
-  }
-  function closeQuickMenu() {
-    quickMenu.classList.remove('show');
-    quickBtn.setAttribute('aria-expanded', 'false');
-  }
-  function onOutsideQuick(e){
-    if (!quickMenu.contains(e.target) && e.target !== quickBtn) closeQuickMenu();
-  }
-  quickBtn.addEventListener('click', () => {
-    if (quickMenu.classList.contains('show')) closeQuickMenu(); else openQuickMenu();
-  });
-  quickMenu.querySelectorAll('.menu__item').forEach(btn => {
-    btn.addEventListener('click', () => {
-      quickChoice = btn.dataset.time || "";
-      // Update label & caption
-      if (quickChoice === "10") {
-        quickBtn.textContent = "10-minute recipes";
-        quickCaption.textContent = "time ≤ 10 minutes";
-      } else if (quickChoice === "20") {
-        quickBtn.textContent = "20-minute recipes";
-        quickCaption.textContent = "time ≤ 20 minutes";
-      } else if (quickChoice === "30+") {
-        quickBtn.textContent = "30+ minute recipes";
-        quickCaption.textContent = "time ≥ 30 minutes";
-      } else {
-        quickBtn.textContent = "Quick recipes";
-        quickCaption.textContent = "";
-      }
-      closeQuickMenu();
-    });
-  });
-
-  // Soft reset: clear form + UI without reloading
   function resetAll() {
-    $('meal-form').reset();
+    form.reset();
     resultsEl.innerHTML = "";
     setStatus("");
     calChip.textContent = "Daily calories: —";
-    // Reset quick choice
-    quickChoice = "";
-    quickBtn.textContent = "Quick recipes";
-    quickCaption.textContent = "";
     window.scrollTo({ top: 0, behavior: "smooth" });
     $('age')?.focus();
   }
   $('home-reset')?.addEventListener('click', resetAll);
 
-  // Form submit → fetch & render
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -219,6 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const dietPreference = $('dietPreference').value;
     const healthSpec = $('healthSpec').value;
     const cuisine = ($('cuisine').value || "").trim();
+    const quick = $('quickSelect').value; // "", "10", "20", "30+"
 
     if ([age, weight, height].some(x => Number.isNaN(x))) {
       setStatus("Please fill Age, Weight and Height.");
@@ -232,11 +184,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const diet = mapDiet(dietPreference);
     const health = mapSpecToHealth(healthSpec);
 
-    // Translate quickChoice -> time range
+    // Map quick selection -> time range
     let timeRange = "";
-    if (quickChoice === "10") timeRange = "1-10";
-    else if (quickChoice === "20") timeRange = "1-20";
-    else if (quickChoice === "30+") timeRange = "30-180";
+    if (quick === "10") timeRange = "1-10";
+    else if (quick === "20") timeRange = "1-20";
+    else if (quick === "30+") timeRange = "30-180"; // safe "30+"
 
     setStatus(""); resultsEl.innerHTML = "";
 
@@ -249,7 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
         cuisine: cuisine || "",
         timeRange: timeRange || ""
       });
-      if (!pool.length) { setStatus("No recipes matched. Try a different quick option or relax filters."); return; }
+      if (!pool.length) { setStatus("No recipes matched. Try a different 'Quick recipes' option or relax filters."); return; }
       const grid = buildWeeklyPlan(pool, meals);
       resultsEl.innerHTML = renderTable(grid);
     } catch (err) {
