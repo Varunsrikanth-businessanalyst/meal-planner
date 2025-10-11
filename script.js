@@ -58,11 +58,17 @@ function buildQuery({ q, perMealCalories, diet, health }) {
 
 
 async function fetchPool(opts) {
-  const res = await fetch(buildQuery(opts));
-  if (!res.ok) throw new Error(`Edamam error ${res.status}`);
-  const data = await res.json();
-  return (data.hits || []).map(h => h.recipe);
+  const url = buildQuery(opts);
+  console.log("Edamam URL (debug):", url.replace(CONFIG.APP_KEY, "****")); // masks key in console
+  const res = await fetch(url);
+  const text = await res.text().catch(() => "");
+  if (!res.ok) {
+    console.error("Edamam response:", res.status, text);
+    throw new Error(`Edamam ${res.status}: ${text || res.statusText}`);
+  }
+  return (JSON.parse(text).hits || []).map(h => h.recipe);
 }
+
 
 // ------- Render weekly table -------
 function ingredientsHTML(list, max = 6) {
