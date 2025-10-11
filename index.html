@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Meal Plan Generator</title>
-  <link href="./styles.css?v=5" rel="stylesheet" />
+  <link href="./styles.css?v=6" rel="stylesheet" />
 </head>
 <body>
   <main class="wrap">
@@ -15,13 +15,12 @@
       </header>
 
       <form id="meal-form" class="form">
-        <!-- Row 1 -->
+        <!-- ROW 1 -->
         <label class="field">
           <span>Age</span>
           <input id="age" type="number" min="12" max="90" placeholder="24" required />
         </label>
 
-        <!-- Weight with unit toggle -->
         <label class="field">
           <span class="row-between">
             <span>Weight</span>
@@ -33,25 +32,13 @@
           <input id="weight" type="number" min="30" max="300" placeholder="70" required />
         </label>
 
-        <!-- Row 2 -->
-        <!-- Height with unit toggle and dual input for ft/in -->
+        <!-- ROW 2 -->
         <label class="field">
-          <span class="row-between">
-            <span>Height</span>
-            <span class="toggle" role="group" aria-label="Height units">
-              <button type="button" class="toggle__btn is-active" data-hu="cm">cm</button>
-              <button type="button" class="toggle__btn" data-hu="ftin">ft/in</button>
-            </span>
-          </span>
-
-          <!-- cm input -->
-          <input id="height" type="number" min="120" max="230" placeholder="175" />
-
-          <!-- ft/in inputs (hidden until ft/in mode) -->
-          <div id="height-ftin" class="ftin hidden">
-            <input id="height-ft" type="number" min="3" max="8" placeholder="5" aria-label="Height feet" />
+          <span>Height (ft / in)</span>
+          <div class="ftin ftin--inline">
+            <input id="height-ft" type="number" min="3" max="8" placeholder="5" aria-label="Feet" />
             <span class="ftin__sep">ft</span>
-            <input id="height-in" type="number" min="0" max="11" placeholder="9" aria-label="Height inches" />
+            <input id="height-in" type="number" min="0" max="11" placeholder="9" aria-label="Inches" />
             <span class="ftin__sep">in</span>
           </div>
         </label>
@@ -64,7 +51,7 @@
           </select>
         </label>
 
-        <!-- Row 3: Activity Level (left) + Cuisine (right, multi-select) -->
+        <!-- ROW 3 -->
         <label class="field">
           <span>Activity Level</span>
           <select id="activityLevel" required>
@@ -77,8 +64,9 @@
         </label>
 
         <label class="field">
-          <span>Cuisine (multi-select)</span>
-          <select id="cuisine" multiple size="6">
+          <span>Cuisine (select up to 5)</span>
+          <select id="cuisine" multiple size="5">
+            <option value="any" selected>Any</option>
             <option value="american">American</option>
             <option value="asian">Asian</option>
             <option value="british">British</option>
@@ -90,7 +78,6 @@
             <option value="indian">Indian</option>
             <option value="italian">Italian</option>
             <option value="japanese">Japanese</option>
-            <option value="kosher">Kosher</option>
             <option value="mediterranean">Mediterranean</option>
             <option value="mexican">Mexican</option>
             <option value="middle eastern">Middle Eastern</option>
@@ -99,10 +86,10 @@
             <option value="south east asian">South East Asian</option>
             <option value="world">World</option>
           </select>
-          <small class="help">Hold Ctrl/⌘ to select multiple; leave empty for any.</small>
+          <small class="help">Leave “Any” selected or choose up to 5 cuisines.</small>
         </label>
 
-        <!-- Row 4 -->
+        <!-- ROW 4 -->
         <label class="field">
           <span>Number of Meals</span>
           <select id="numOfMeals" required>
@@ -121,8 +108,8 @@
           </select>
         </label>
 
-        <!-- Row 5 -->
-        <label class="field">
+        <!-- ROW 5 -->
+        <label class="field field--span2">
           <span>Health Specification</span>
           <select id="healthSpec" required>
             <option value="vegan">Vegan</option>
@@ -133,9 +120,7 @@
           </select>
         </label>
 
-        <div class="field"></div> <!-- spacer -->
-
-        <!-- Row 6: actions -->
+        <!-- ROW 6 -->
         <div class="actions field--span2">
           <button type="submit" class="btn">Generate Meal Plan</button>
           <span id="status" class="status" role="status" aria-live="polite"></span>
@@ -150,6 +135,6 @@
     </section>
   </main>
 
-  <script src="./script.js?v=12"></script>
+  <script src="./script.js?v=13"></script>
 </body>
 </html>
