@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Meal Plan Generator</title>
-  <link href="./styles.css?v=7" rel="stylesheet" />
+  <link href="./styles.css?v=4" rel="stylesheet" />
 </head>
 <body>
   <main class="wrap">
@@ -15,32 +15,21 @@
       </header>
 
       <form id="meal-form" class="form">
-        <!-- ROW 1 -->
+        <!-- Row 1 -->
         <label class="field">
           <span>Age</span>
           <input id="age" type="number" min="12" max="90" placeholder="24" required />
         </label>
 
         <label class="field">
-          <span class="row-between">
-            <span>Weight</span>
-            <span class="toggle" role="group" aria-label="Weight units">
-              <button type="button" class="toggle__btn is-active" data-wu="kg">kg</button>
-              <button type="button" class="toggle__btn" data-wu="lb">lb</button>
-            </span>
-          </span>
-          <input id="weight" type="number" min="30" max="300" placeholder="70" required />
+          <span>Weight (kg)</span>
+          <input id="weight" type="number" min="40" max="200" placeholder="70" required />
         </label>
 
-        <!-- ROW 2 -->
+        <!-- Row 2 -->
         <label class="field">
-          <span>Height (ft / in)</span>
-          <div class="ftin ftin--inline">
-            <input id="height-ft" type="number" min="3" max="8" placeholder="5" aria-label="Feet" />
-            <span class="ftin__sep">ft</span>
-            <input id="height-in" type="number" min="0" max="11" placeholder="9" aria-label="Inches" />
-            <span class="ftin__sep">in</span>
-          </div>
+          <span>Height (cm)</span>
+          <input id="height" type="number" min="120" max="230" placeholder="175" required />
         </label>
 
         <label class="field">
@@ -51,7 +40,7 @@
           </select>
         </label>
 
-        <!-- ROW 3 -->
+        <!-- Row 3: Activity Level (left) + Cuisine (right) -->
         <label class="field">
           <span>Activity Level</span>
           <select id="activityLevel" required>
@@ -64,19 +53,32 @@
         </label>
 
         <label class="field">
-          <span>Cuisine (select up to 5)</span>
-          <!-- Custom cuisine dropdown (looks like a single-line input) -->
-          <div class="cuisine" id="cuisine">
-            <button type="button" class="selectlike" id="cuisine-btn" aria-haspopup="listbox" aria-expanded="false">
-              Any
-            </button>
-            <div class="menu" id="cuisine-menu" role="listbox" aria-multiselectable="true"></div>
-          </div>
-          <small class="help">Leave “Any” or choose up to 5 cuisines.</small>
-          <input type="hidden" id="cuisine-hidden" />
+          <span>Cuisine</span>
+          <select id="cuisine">
+            <option value="">Any</option>
+            <option value="american">American</option>
+            <option value="asian">Asian</option>
+            <option value="british">British</option>
+            <option value="caribbean">Caribbean</option>
+            <option value="central europe">Central Europe</option>
+            <option value="chinese">Chinese</option>
+            <option value="eastern europe">Eastern Europe</option>
+            <option value="french">French</option>
+            <option value="indian">Indian</option>
+            <option value="italian">Italian</option>
+            <option value="japanese">Japanese</option>
+            <option value="kosher">Kosher</option>
+            <option value="mediterranean">Mediterranean</option>
+            <option value="mexican">Mexican</option>
+            <option value="middle eastern">Middle Eastern</option>
+            <option value="nordic">Nordic</option>
+            <option value="south american">South American</option>
+            <option value="south east asian">South East Asian</option>
+            <option value="world">World</option>
+          </select>
         </label>
 
-        <!-- ROW 4 -->
+        <!-- Row 4 -->
         <label class="field">
           <span>Number of Meals</span>
           <select id="numOfMeals" required>
@@ -95,7 +97,7 @@
           </select>
         </label>
 
-        <!-- ROW 5 (health is now normal width like others) -->
+        <!-- Row 5 -->
         <label class="field">
           <span>Health Specification</span>
           <select id="healthSpec" required>
@@ -107,20 +109,19 @@
           </select>
         </label>
 
-        <div class="actions">
+        <div class="field"></div> <!-- spacer to keep grid aligned -->
+
+        <!-- Row 6: actions -->
+        <div class="actions field--span2">
           <button type="submit" class="btn">Generate Meal Plan</button>
           <span id="status" class="status" role="status" aria-live="polite"></span>
         </div>
       </form>
 
       <div id="results" class="results"></div>
-
-      <footer class="disclaimer">
-        <small>Nutrition values are provider estimates; consult a professional for medical advice.</small>
-      </footer>
     </section>
   </main>
 
-  <script src="./script.js?v=14"></script>
+  <script src="./script.js?v=11"></script>
 </body>
 </html>
