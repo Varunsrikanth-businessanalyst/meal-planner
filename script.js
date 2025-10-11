@@ -2,7 +2,7 @@
 const CONFIG = {
   APP_ID: "2befcb23",
   APP_KEY: "8f23abc226368ff9c39b71b668e43349",
-  USER_ID: "Vaarun", // your Edamam account username (case-sensitive)
+  USER_ID: "Vaarun",   // your Edamam account username (case-sensitive)
   MAX_RESULTS: 60
 };
 
@@ -43,7 +43,6 @@ function buildQuery({ q, perMealCalories, diet, health }) {
   if (Number.isFinite(perMealCalories)) {
     params.append("calories", `${Math.max(100, perMealCalories - 120)}-${perMealCalories + 120}`);
   }
-  // include url, yield and totalNutrients for macros
   [
     "label","image","url","yield",
     "ingredientLines","calories","totalNutrients",
@@ -66,43 +65,35 @@ async function fetchPool(opts) {
   return (data.hits || []).map(h => h.recipe);
 }
 
-// ------- Helpers for rendering -------
+// ------- helpers for macros -------
 function kcalPerServing(recipe) {
   const servings = Math.max(1, recipe.yield || 1);
   return Math.round((recipe.calories || 0) / servings);
 }
-function gPerServing(recipe, nutrientKey) {
-  const n = recipe.totalNutrients?.[nutrientKey]?.quantity;
+function gPerServing(recipe, key) {
+  const qty = recipe.totalNutrients?.[key]?.quantity;
   const servings = Math.max(1, recipe.yield || 1);
-  if (!n || !isFinite(n)) return 0;
-  return Math.round(n / servings);
+  if (!qty || !isFinite(qty)) return 0;
+  return Math.round(qty / servings);
 }
 function macroChipsHTML(recipe) {
-  const carbs = gPerServing(recipe, "CHOCDF");
-  const prot  = gPerServing(recipe, "PROCNT");
-  const fat   = gPerServing(recipe, "FAT");
-  const fiber = gPerServing(recipe, "FIBTG");
-  const sugar = gPerServing(recipe, "SUGAR");
-
-  const chip = (label, val) =>
-    `<span style="display:inline-block;border:1px solid #e2e8f0;background:#f8fafc;padding:4px 8px;border-radius:999px;font-size:12px;">
-       ${label}: ${val}g
-     </span>`;
-
+  const macro = (label, grams) => `
+    <span class="chip"><span class="chip__dot"></span>${label}: ${grams}g</span>`;
   return `
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px;">
-      ${chip("Carbs", carbs)}
-      ${chip("Protein", prot)}
-      ${chip("Fat", fat)}
-      ${chip("Fiber", fiber)}
-      ${chip("Sugar", sugar)}
+    <div class="macros">
+      ${macro("Carbs",  gPerServing(recipe,"CHOCDF"))}
+      ${macro("Protein",gPerServing(recipe,"PROCNT"))}
+      ${macro("Fat",    gPerServing(recipe,"FAT"))}
+      ${macro("Fiber",  gPerServing(recipe,"FIBTG"))}
+      ${macro("Sugar",  gPerServing(recipe,"SUGAR"))}
     </div>`;
 }
+
+// ------- results rendering -------
 function ingredientsHTML(list, max = 6) {
   const items = (list || []).slice(0, max).map(x => `<li>${x}</li>`).join("");
   return `<ul style="margin:6px 0 0 18px;">${items}</ul>`;
 }
-
 function buildWeeklyPlan(recipes, mealsPerDay) {
   const grid = Array.from({ length: mealsPerDay }, () => Array(7).fill(null));
   let i = 0;
@@ -114,22 +105,21 @@ function buildWeeklyPlan(recipes, mealsPerDay) {
   }
   return grid;
 }
-
 function renderTable(grid) {
-  const thead = `<thead><tr><th style="text-align:left;">Meal</th>${WEEKDAYS.map(d=>`<th>${d}</th>`).join("")}</tr></thead>`;
+  const thead = `<thead><tr><th>Meal</th>${WEEKDAYS.map(d=>`<th>${d}</th>`).join("")}</tr></thead>`;
   const tbody = `<tbody>${
     grid.map((row, rIdx) => `
       <tr>
-        <td style="font-weight:700;">Meal ${rIdx+1}</td>
+        <td>Meal ${rIdx+1}</td>
         ${row.map(rec => `
-          <td style="min-width:220px;vertical-align:top;">
+          <td style="min-width:220px;">
             <div style="font-weight:700;margin-bottom:4px;">
-              <a href="${rec.url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:#0f172a;">
+              <a href="${rec.url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:#fef9c3;">
                 ${rec.label}
               </a>
             </div>
-            <img class="recipe" src="${rec.image}" alt="${rec.label}" style="width:100%;height:auto;border-radius:10px;border:1px solid #e5e7eb;margin:6px 0;" />
-            <div style="margin:6px 0 4px; font-size:13px; color:#475569;">
+            <img class="recipe" src="${rec.image}" alt="${rec.label}" />
+            <div style="margin:6px 0 4px; font-size:13px; color:#cbd5e1;">
               ~${kcalPerServing(rec)} kcal/serving
             </div>
             ${macroChipsHTML(rec)}
@@ -141,12 +131,19 @@ function renderTable(grid) {
   return `<table>${thead}${tbody}</table>`;
 }
 
-// ------- Main submit handler -------
+// ------- main -------
 document.addEventListener("DOMContentLoaded", () => {
   const form = $('meal-form');
   const statusEl = $('status');
   const resultsEl = $('results');
   const calChip = $('cal-output');
+
+  const setStatus = (msg) => {
+    if (!statusEl) return;
+    if (!msg) { statusEl.textContent = ""; statusEl.classList.remove("show"); return; }
+    statusEl.textContent = msg;
+    statusEl.classList.add("show");
+  };
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -161,7 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const healthSpec = $('healthSpec').value;
 
     if ([age, weight, height].some(x => Number.isNaN(x))) {
-      statusEl.textContent = "Please fill Age, Weight, and Height.";
+      setStatus("Please fill Age, Weight and Height.");
       return;
     }
 
@@ -172,20 +169,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const diet = mapDiet(dietPreference);
     const health = mapSpecToHealth(healthSpec);
 
-    statusEl.textContent = `Fetching recipes near ~${perMeal} kcal per meal…`;
-    resultsEl.innerHTML = "";
+    setStatus(""); resultsEl.innerHTML = "";
 
     try {
       const pool = await fetchPool({ q: "recipe", perMealCalories: perMeal, diet, health });
-      if (!pool.length) {
-        statusEl.textContent = "No recipes found for your filters. Try different options.";
-        return;
-      }
+      if (!pool.length) { setStatus("No recipes matched. Try different filters."); return; }
       const grid = buildWeeklyPlan(pool, meals);
       resultsEl.innerHTML = renderTable(grid);
-      statusEl.textContent = "Done.";
     } catch (err) {
-      statusEl.textContent = `Error: ${err.message}`;
+      setStatus(err.message || "Something went wrong.");
     }
   });
 });
