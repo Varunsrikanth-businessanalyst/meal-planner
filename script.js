@@ -29,7 +29,7 @@ function mapSpecToHealth(s) {
 }
 
 // ------- Edamam query & fetch -------
-function buildQuery({ q, perMealCalories, diet, health }) {
+function buildQuery({ q, perMealCalories, diet, health, cuisine }) {
   const params = new URLSearchParams({
     type: "public",
     q: q || "meal",
@@ -43,14 +43,17 @@ function buildQuery({ q, perMealCalories, diet, health }) {
   if (Number.isFinite(perMealCalories)) {
     params.append("calories", `${Math.max(100, perMealCalories - 120)}-${perMealCalories + 120}`);
   }
+  // fields we actually use
   [
     "label","image","url","yield",
     "ingredientLines","calories","totalNutrients",
     "dietLabels","healthLabels"
   ].forEach(f => params.append("field", f));
 
-  if (diet) params.append("diet", diet);
+  if (diet)   params.append("diet", diet);
   if (health) params.append("health", health);
+  if (cuisine) params.append("cuisineType", cuisine); // <- NEW
+
   return `https://api.edamam.com/api/recipes/v2?${params.toString()}`;
 }
 
@@ -147,27 +150,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Soft reset: clear form + UI without reloading
   function resetAll() {
-    const formEl = document.getElementById('meal-form');
-    const results = document.getElementById('results');
-    const status = document.getElementById('status');
-    const cal = document.getElementById('cal-output');
+    const formEl = $('meal-form');
+    const results = $('results');
+    const status = $('status');
+    const cal = $('cal-output');
 
-    // Reset inputs to their initial HTML defaults
     formEl.reset();
-
-    // Clear UI
     results.innerHTML = "";
     if (status) { status.textContent = ""; status.classList.remove("show"); }
     if (cal) cal.textContent = "Daily calories: —";
 
-    // Scroll to top & focus first field
     window.scrollTo({ top: 0, behavior: "smooth" });
-    const first = document.getElementById('age');
+    const first = $('age');
     if (first) first.focus();
   }
 
-  // Make title act as "Start over"
-  const titleBtn = document.getElementById('home-reset');
+  const titleBtn = $('home-reset');
   if (titleBtn) titleBtn.addEventListener('click', resetAll);
 
   // Form submit → fetch & render
@@ -182,6 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const meals = Number($('numOfMeals').value);
     const dietPreference = $('dietPreference').value;
     const healthSpec = $('healthSpec').value;
+    const cuisine = ($('cuisine').value || "").trim(); // <- NEW
 
     if ([age, weight, height].some(x => Number.isNaN(x))) {
       setStatus("Please fill Age, Weight and Height.");
@@ -198,7 +197,13 @@ document.addEventListener("DOMContentLoaded", () => {
     setStatus(""); resultsEl.innerHTML = "";
 
     try {
-      const pool = await fetchPool({ q: "recipe", perMealCalories: perMeal, diet, health });
+      const pool = await fetchPool({
+        q: "recipe",
+        perMealCalories: perMeal,
+        diet,
+        health,
+        cuisine: cuisine || ""   // only send when chosen
+      });
       if (!pool.length) { setStatus("No recipes matched. Try different filters."); return; }
       const grid = buildWeeklyPlan(pool, meals);
       resultsEl.innerHTML = renderTable(grid);
