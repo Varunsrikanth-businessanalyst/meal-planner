@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Meal Plan Generator</title>
-  <link href="./styles.css?v=6" rel="stylesheet" />
+  <link href="./styles.css?v=7" rel="stylesheet" />
 </head>
 <body>
   <main class="wrap">
@@ -65,28 +65,15 @@
 
         <label class="field">
           <span>Cuisine (select up to 5)</span>
-          <select id="cuisine" multiple size="5">
-            <option value="any" selected>Any</option>
-            <option value="american">American</option>
-            <option value="asian">Asian</option>
-            <option value="british">British</option>
-            <option value="caribbean">Caribbean</option>
-            <option value="central europe">Central Europe</option>
-            <option value="chinese">Chinese</option>
-            <option value="eastern europe">Eastern Europe</option>
-            <option value="french">French</option>
-            <option value="indian">Indian</option>
-            <option value="italian">Italian</option>
-            <option value="japanese">Japanese</option>
-            <option value="mediterranean">Mediterranean</option>
-            <option value="mexican">Mexican</option>
-            <option value="middle eastern">Middle Eastern</option>
-            <option value="nordic">Nordic</option>
-            <option value="south american">South American</option>
-            <option value="south east asian">South East Asian</option>
-            <option value="world">World</option>
-          </select>
-          <small class="help">Leave “Any” selected or choose up to 5 cuisines.</small>
+          <!-- Custom cuisine dropdown (looks like a single-line input) -->
+          <div class="cuisine" id="cuisine">
+            <button type="button" class="selectlike" id="cuisine-btn" aria-haspopup="listbox" aria-expanded="false">
+              Any
+            </button>
+            <div class="menu" id="cuisine-menu" role="listbox" aria-multiselectable="true"></div>
+          </div>
+          <small class="help">Leave “Any” or choose up to 5 cuisines.</small>
+          <input type="hidden" id="cuisine-hidden" />
         </label>
 
         <!-- ROW 4 -->
@@ -108,8 +95,8 @@
           </select>
         </label>
 
-        <!-- ROW 5 -->
-        <label class="field field--span2">
+        <!-- ROW 5 (health is now normal width like others) -->
+        <label class="field">
           <span>Health Specification</span>
           <select id="healthSpec" required>
             <option value="vegan">Vegan</option>
@@ -120,8 +107,7 @@
           </select>
         </label>
 
-        <!-- ROW 6 -->
-        <div class="actions field--span2">
+        <div class="actions">
           <button type="submit" class="btn">Generate Meal Plan</button>
           <span id="status" class="status" role="status" aria-live="polite"></span>
         </div>
@@ -135,6 +121,6 @@
     </section>
   </main>
 
-  <script src="./script.js?v=13"></script>
+  <script src="./script.js?v=14"></script>
 </body>
 </html>
