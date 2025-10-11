@@ -2,6 +2,7 @@
 const CONFIG = {
   APP_ID: "2befcb23",
   APP_KEY: "8f23abc226368ff9c39b71b668e43349",
+  USER_ID: "varunsrikanth23@gmai.com",
   MAX_RESULTS: 60
 };
 
@@ -59,14 +60,13 @@ function buildQuery({ q, perMealCalories, diet, health }) {
 
 async function fetchPool(opts) {
   const url = buildQuery(opts);
-  console.log("Edamam URL (debug):", url.replace(CONFIG.APP_KEY, "****")); // masks key in console
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    headers: { "Edamam-Account-User": CONFIG.USER_ID }
+  });
   const text = await res.text().catch(() => "");
-  if (!res.ok) {
-    console.error("Edamam response:", res.status, text);
-    throw new Error(`Edamam ${res.status}: ${text || res.statusText}`);
-  }
-  return (JSON.parse(text).hits || []).map(h => h.recipe);
+  if (!res.ok) throw new Error(`Edamam ${res.status}: ${text || res.statusText}`);
+  const data = JSON.parse(text);
+  return (data.hits || []).map(h => h.recipe);
 }
 
 
