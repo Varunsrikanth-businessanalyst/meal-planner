@@ -1,9 +1,8 @@
 // ===== Edamam Recipe Search (client-only demo) =====
-// Keep these exactly as you have them working already.
 const CONFIG = {
   APP_ID: "2befcb23",
   APP_KEY: "8f23abc226368ff9c39b71b668e43349",
-  USER_ID: "Vaarun", // your Edamam account *username* (case-sensitive)
+  USER_ID: "Vaarun", // your Edamam account username (case-sensitive)
   MAX_RESULTS: 60
 };
 
@@ -44,9 +43,12 @@ function buildQuery({ q, perMealCalories, diet, health }) {
   if (Number.isFinite(perMealCalories)) {
     params.append("calories", `${Math.max(100, perMealCalories - 120)}-${perMealCalories + 120}`);
   }
-  // include url & yield so we can link and compute kcal/serving
-  ["label","image","url","yield","ingredientLines","calories","totalWeight","dietLabels","healthLabels"]
-    .forEach(f => params.append("field", f));
+  // include url, yield and totalNutrients for macros
+  [
+    "label","image","url","yield",
+    "ingredientLines","calories","totalNutrients",
+    "dietLabels","healthLabels"
+  ].forEach(f => params.append("field", f));
 
   if (diet) params.append("diet", diet);
   if (health) params.append("health", health);
@@ -64,12 +66,38 @@ async function fetchPool(opts) {
   return (data.hits || []).map(h => h.recipe);
 }
 
-// ------- Render weekly table (titles are links + kcal/serving) -------
+// ------- Helpers for rendering -------
 function kcalPerServing(recipe) {
   const servings = Math.max(1, recipe.yield || 1);
   return Math.round((recipe.calories || 0) / servings);
 }
+function gPerServing(recipe, nutrientKey) {
+  const n = recipe.totalNutrients?.[nutrientKey]?.quantity;
+  const servings = Math.max(1, recipe.yield || 1);
+  if (!n || !isFinite(n)) return 0;
+  return Math.round(n / servings);
+}
+function macroChipsHTML(recipe) {
+  const carbs = gPerServing(recipe, "CHOCDF");
+  const prot  = gPerServing(recipe, "PROCNT");
+  const fat   = gPerServing(recipe, "FAT");
+  const fiber = gPerServing(recipe, "FIBTG");
+  const sugar = gPerServing(recipe, "SUGAR");
 
+  const chip = (label, val) =>
+    `<span style="display:inline-block;border:1px solid #e2e8f0;background:#f8fafc;padding:4px 8px;border-radius:999px;font-size:12px;">
+       ${label}: ${val}g
+     </span>`;
+
+  return `
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px;">
+      ${chip("Carbs", carbs)}
+      ${chip("Protein", prot)}
+      ${chip("Fat", fat)}
+      ${chip("Fiber", fiber)}
+      ${chip("Sugar", sugar)}
+    </div>`;
+}
 function ingredientsHTML(list, max = 6) {
   const items = (list || []).slice(0, max).map(x => `<li>${x}</li>`).join("");
   return `<ul style="margin:6px 0 0 18px;">${items}</ul>`;
@@ -104,6 +132,7 @@ function renderTable(grid) {
             <div style="margin:6px 0 4px; font-size:13px; color:#475569;">
               ~${kcalPerServing(rec)} kcal/serving
             </div>
+            ${macroChipsHTML(rec)}
             ${ingredientsHTML(rec.ingredientLines)}
           </td>`).join("")}
       </tr>
