@@ -114,12 +114,12 @@ function renderTable(grid) {
         ${row.map(rec => `
           <td style="min-width:220px;">
             <div style="font-weight:700;margin-bottom:4px;">
-              <a href="${rec.url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:#fef9c3;">
+              <a href="${rec.url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:#ffffff;">
                 ${rec.label}
               </a>
             </div>
             <img class="recipe" src="${rec.image}" alt="${rec.label}" />
-            <div style="margin:6px 0 4px; font-size:13px; color:#cbd5e1;">
+            <div style="margin:6px 0 4px; font-size:13px; color:#e5e7eb;">
               ~${kcalPerServing(rec)} kcal/serving
             </div>
             ${macroChipsHTML(rec)}
@@ -145,6 +145,32 @@ document.addEventListener("DOMContentLoaded", () => {
     statusEl.classList.add("show");
   };
 
+  // Soft reset: clear form + UI without reloading
+  function resetAll() {
+    const formEl = document.getElementById('meal-form');
+    const results = document.getElementById('results');
+    const status = document.getElementById('status');
+    const cal = document.getElementById('cal-output');
+
+    // Reset inputs to their initial HTML defaults
+    formEl.reset();
+
+    // Clear UI
+    results.innerHTML = "";
+    if (status) { status.textContent = ""; status.classList.remove("show"); }
+    if (cal) cal.textContent = "Daily calories: —";
+
+    // Scroll to top & focus first field
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    const first = document.getElementById('age');
+    if (first) first.focus();
+  }
+
+  // Make title act as "Start over"
+  const titleBtn = document.getElementById('home-reset');
+  if (titleBtn) titleBtn.addEventListener('click', resetAll);
+
+  // Form submit → fetch & render
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
