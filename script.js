@@ -3,7 +3,7 @@
 const CONFIG = {
   APP_ID: "2befcb23",
   APP_KEY: "8f23abc226368ff9c39b71b668e43349",
-  USER_ID: "varunsrikanth23@gmail.com",
+  USER_ID: "Vaarun",
   MAX_RESULTS: 60
 };
 
