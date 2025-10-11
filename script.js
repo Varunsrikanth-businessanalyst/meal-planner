@@ -2,7 +2,7 @@
 const CONFIG = {
   APP_ID: "2befcb23",
   APP_KEY: "8f23abc226368ff9c39b71b668e43349",
-  USER_ID: "Vaarun",   // your Edamam account username (case-sensitive)
+  USER_ID: "Vaarun", // your Edamam account username (case-sensitive)
   MAX_RESULTS: 60
 };
 
@@ -29,7 +29,7 @@ function mapSpecToHealth(s) {
 }
 
 // ------- Edamam query & fetch -------
-function buildQuery({ q, perMealCalories, diet, health, cuisine }) {
+function buildQuery({ q, perMealCalories, diet, health, cuisine, timeRange }) {
   const params = new URLSearchParams({
     type: "public",
     q: q || "meal",
@@ -40,28 +40,28 @@ function buildQuery({ q, perMealCalories, diet, health, cuisine }) {
     to: String(CONFIG.MAX_RESULTS),
     random: "true"
   });
+
   if (Number.isFinite(perMealCalories)) {
     params.append("calories", `${Math.max(100, perMealCalories - 120)}-${perMealCalories + 120}`);
   }
-  // fields we actually use
+
   [
     "label","image","url","yield",
     "ingredientLines","calories","totalNutrients",
-    "dietLabels","healthLabels"
+    "dietLabels","healthLabels","totalTime"
   ].forEach(f => params.append("field", f));
 
-  if (diet)   params.append("diet", diet);
-  if (health) params.append("health", health);
-  if (cuisine) params.append("cuisineType", cuisine); // <- NEW
+  if (diet)     params.append("diet", diet);
+  if (health)   params.append("health", health);
+  if (cuisine)  params.append("cuisineType", cuisine);
+  if (timeRange) params.append("time", timeRange);
 
   return `https://api.edamam.com/api/recipes/v2?${params.toString()}`;
 }
 
 async function fetchPool(opts) {
   const url = buildQuery(opts);
-  const res = await fetch(url, {
-    headers: { "Edamam-Account-User": CONFIG.USER_ID }
-  });
+  const res = await fetch(url, { headers: { "Edamam-Account-User": CONFIG.USER_ID } });
   const text = await res.text().catch(() => "");
   if (!res.ok) throw new Error(`Edamam ${res.status}: ${text || res.statusText}`);
   const data = JSON.parse(text);
@@ -123,7 +123,7 @@ function renderTable(grid) {
             </div>
             <img class="recipe" src="${rec.image}" alt="${rec.label}" />
             <div style="margin:6px 0 4px; font-size:13px; color:#e5e7eb;">
-              ~${kcalPerServing(rec)} kcal/serving
+              ~${kcalPerServing(rec)} kcal/serving${Number.isFinite(rec.totalTime) ? ` • ${rec.totalTime} min` : ""}
             </div>
             ${macroChipsHTML(rec)}
             ${ingredientsHTML(rec.ingredientLines)}
@@ -141,6 +141,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const resultsEl = $('results');
   const calChip = $('cal-output');
 
+  // Quick recipes state
+  const quickBtn = $('quick-btn');
+  const quickMenu = $('quick-menu');
+  const quickCaption = $('quick-caption');
+  let quickChoice = ""; // "", "10", "20", "30+"
+
   const setStatus = (msg) => {
     if (!statusEl) return;
     if (!msg) { statusEl.textContent = ""; statusEl.classList.remove("show"); return; }
@@ -148,25 +154,57 @@ document.addEventListener("DOMContentLoaded", () => {
     statusEl.classList.add("show");
   };
 
+  // Quick dropdown handlers
+  function openQuickMenu() {
+    quickMenu.classList.add('show');
+    quickBtn.setAttribute('aria-expanded', 'true');
+    document.addEventListener('click', onOutsideQuick, { once: true });
+  }
+  function closeQuickMenu() {
+    quickMenu.classList.remove('show');
+    quickBtn.setAttribute('aria-expanded', 'false');
+  }
+  function onOutsideQuick(e){
+    if (!quickMenu.contains(e.target) && e.target !== quickBtn) closeQuickMenu();
+  }
+  quickBtn.addEventListener('click', () => {
+    if (quickMenu.classList.contains('show')) closeQuickMenu(); else openQuickMenu();
+  });
+  quickMenu.querySelectorAll('.menu__item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      quickChoice = btn.dataset.time || "";
+      // Update label & caption
+      if (quickChoice === "10") {
+        quickBtn.textContent = "10-minute recipes";
+        quickCaption.textContent = "time ≤ 10 minutes";
+      } else if (quickChoice === "20") {
+        quickBtn.textContent = "20-minute recipes";
+        quickCaption.textContent = "time ≤ 20 minutes";
+      } else if (quickChoice === "30+") {
+        quickBtn.textContent = "30+ minute recipes";
+        quickCaption.textContent = "time ≥ 30 minutes";
+      } else {
+        quickBtn.textContent = "Quick recipes";
+        quickCaption.textContent = "";
+      }
+      closeQuickMenu();
+    });
+  });
+
   // Soft reset: clear form + UI without reloading
   function resetAll() {
-    const formEl = $('meal-form');
-    const results = $('results');
-    const status = $('status');
-    const cal = $('cal-output');
-
-    formEl.reset();
-    results.innerHTML = "";
-    if (status) { status.textContent = ""; status.classList.remove("show"); }
-    if (cal) cal.textContent = "Daily calories: —";
-
+    $('meal-form').reset();
+    resultsEl.innerHTML = "";
+    setStatus("");
+    calChip.textContent = "Daily calories: —";
+    // Reset quick choice
+    quickChoice = "";
+    quickBtn.textContent = "Quick recipes";
+    quickCaption.textContent = "";
     window.scrollTo({ top: 0, behavior: "smooth" });
-    const first = $('age');
-    if (first) first.focus();
+    $('age')?.focus();
   }
-
-  const titleBtn = $('home-reset');
-  if (titleBtn) titleBtn.addEventListener('click', resetAll);
+  $('home-reset')?.addEventListener('click', resetAll);
 
   // Form submit → fetch & render
   form.addEventListener("submit", async (e) => {
@@ -180,7 +218,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const meals = Number($('numOfMeals').value);
     const dietPreference = $('dietPreference').value;
     const healthSpec = $('healthSpec').value;
-    const cuisine = ($('cuisine').value || "").trim(); // <- NEW
+    const cuisine = ($('cuisine').value || "").trim();
 
     if ([age, weight, height].some(x => Number.isNaN(x))) {
       setStatus("Please fill Age, Weight and Height.");
@@ -194,6 +232,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const diet = mapDiet(dietPreference);
     const health = mapSpecToHealth(healthSpec);
 
+    // Translate quickChoice -> time range
+    let timeRange = "";
+    if (quickChoice === "10") timeRange = "1-10";
+    else if (quickChoice === "20") timeRange = "1-20";
+    else if (quickChoice === "30+") timeRange = "30-180";
+
     setStatus(""); resultsEl.innerHTML = "";
 
     try {
@@ -202,9 +246,10 @@ document.addEventListener("DOMContentLoaded", () => {
         perMealCalories: perMeal,
         diet,
         health,
-        cuisine: cuisine || ""   // only send when chosen
+        cuisine: cuisine || "",
+        timeRange: timeRange || ""
       });
-      if (!pool.length) { setStatus("No recipes matched. Try different filters."); return; }
+      if (!pool.length) { setStatus("No recipes matched. Try a different quick option or relax filters."); return; }
       const grid = buildWeeklyPlan(pool, meals);
       resultsEl.innerHTML = renderTable(grid);
     } catch (err) {
