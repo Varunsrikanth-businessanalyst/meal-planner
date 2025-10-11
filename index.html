@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Meal Plan Generator</title>
-  <link href="./styles.css?v=5" rel="stylesheet" />
+  <link href="./styles.css?v=6" rel="stylesheet" />
 </head>
 <body>
   <main class="wrap">
@@ -40,7 +40,7 @@
           </select>
         </label>
 
-        <!-- Row 3: Activity Level (left) + Cuisine (right) -->
+        <!-- Row 3 -->
         <label class="field">
           <span>Activity Level</span>
           <select id="activityLevel" required>
@@ -97,8 +97,19 @@
           </select>
         </label>
 
-        <!-- Row 5: Health (left) + Quick recipes (full-width below Diet) -->
-        <label class="field">
+        <!-- NEW Row 5: Quick recipes (dropdown, full width) -->
+        <label class="field field--span2">
+          <span>Quick recipes</span>
+          <select id="quickSelect">
+            <option value="" selected>Off (no time filter)</option>
+            <option value="10">10-minute recipes</option>
+            <option value="20">20-minute recipes</option>
+            <option value="30+">30+ minute recipes</option>
+          </select>
+        </label>
+
+        <!-- Row 6 -->
+        <label class="field field--span2">
           <span>Health Specification</span>
           <select id="healthSpec" required>
             <option value="vegan">Vegan</option>
@@ -109,27 +120,7 @@
           </select>
         </label>
 
-        <div class="field"></div><!-- spacer -->
-
-        <!-- Quick recipes control (full width) -->
-        <div class="field field--span2">
-          <span class="label-inline">Cooking speed</span>
-          <div class="quick-wrap">
-            <button id="quick-btn" class="btn-ghost" type="button" aria-haspopup="menu" aria-expanded="false">
-              Quick recipes
-            </button>
-            <div id="quick-menu" class="menu" role="menu" aria-labelledby="quick-btn">
-              <button class="menu__item" data-time="10" role="menuitem">10-minute recipes</button>
-              <button class="menu__item" data-time="20" role="menuitem">20-minute recipes</button>
-              <button class="menu__item" data-time="30+" role="menuitem">30+ minute recipes</button>
-              <div class="menu__sep"></div>
-              <button class="menu__item -muted" data-time="" role="menuitem">Clear</button>
-            </div>
-            <span id="quick-caption" class="muted small"></span>
-          </div>
-        </div>
-
-        <!-- Row 6: actions -->
+        <!-- Actions -->
         <div class="actions field--span2">
           <button type="submit" class="btn">Generate Meal Plan</button>
           <span id="status" class="status" role="status" aria-live="polite"></span>
@@ -140,6 +131,6 @@
     </section>
   </main>
 
-  <script src="./script.js?v=12"></script>
+  <script src="./script.js?v=13"></script>
 </body>
 </html>
