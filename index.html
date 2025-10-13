@@ -4,10 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Meal Plan Generator</title>
-
-  <!-- Screen styles -->
   <link href="./styles.css?v=8" rel="stylesheet" />
-  <!-- Print stylesheet already handled inside styles.css (@media print) -->
 </head>
 <body>
   <main class="wrap">
@@ -129,12 +126,15 @@
         </div>
       </form>
 
-      <!-- Phase 2: mobile UI containers -->
-      <div id="day-tabs" class="day-tabs" hidden></div>
-      <div id="mobile-results" class="mobile-results" hidden></div>
-
-      <!-- Desktop results table (unchanged) -->
+      <!-- DESKTOP RESULTS -->
       <div id="results" class="results"></div>
+      <!-- MOBILE RESULTS -->
+      <div id="mobile-results" class="results results--mobile"></div>
+
+      <!-- Export Bar -->
+      <div id="export-bar" class="exportbar hidden">
+        <button id="download-pdf" type="button" class="btn btn-secondary">Download PDF</button>
+      </div>
     </section>
   </main>
 
