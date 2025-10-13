@@ -165,3 +165,69 @@ td:first-child{ font-weight:700}
   }
   .chip__dot { background: #000 !important; }
 }
+
+/* optional: a subtle ghost button look */
+.btn--ghost{
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--text);
+}
+
+/* ---------- PRINT LAYOUT ---------- */
+@page {
+  size: A4 landscape;              /* Force landscape */
+  margin: 10mm;                    /* Printer-friendly margins */
+}
+
+@media print {
+
+  /* neutral page colors */
+  :root { --bg:#fff; --panel:#fff; --panel-2:#fff; --text:#000; --border:#ddd; --chip:#f5f5f5; }
+  body { background:#fff; color:#000; }
+  a { color:#000; text-decoration:none; }
+
+  .wrap{ padding:0 }
+  .card{ border:0; background:#fff; padding:8mm 0 0 }
+  .card__header{ border:0; padding:0 0 6px }
+
+  /* show only the results + title */
+  .form, #home-reset, .status { display:none !important; }
+  .pill{ border:0; background:#fff; color:#000 }
+
+  /* table tweaks to fit 7 columns comfortably */
+  .results{ overflow:visible }
+  table{ width:100%; min-width:auto; table-layout:fixed; border-collapse:collapse }
+  th, td{
+    padding:6px;
+    border:1px solid #ddd;
+    vertical-align:top;
+    font-size:12px;
+  }
+  th{
+    position:static;               /* turn off sticky header for print */
+    background:#fff; color:#000;
+  }
+
+  /* override inline min-width:220px from JS */
+  td{ min-width:175px !important; }
+
+  /* smaller imagery & chips so more fits per page */
+  .recipe{
+    width:100%; height:auto;
+    max-height:110px;
+    object-fit:cover;
+    border:1px solid #ddd;
+  }
+  .macros{ gap:4px; margin:4px 0 6px }
+  .chip{ padding:2px 6px; font-size:10px; background:#f5f5f5; border-color:#ddd; color:#000 }
+  .chip__dot{ width:4px; height:4px }
+
+  /* ingredients list: show first 6 lines to limit overflow */
+  ul{ margin:4px 0 0 16px; padding:0 }
+  ul li{ font-size:11px; line-height:1.25 }
+  ul li:nth-child(n+7){ display:none }   /* hide 7th+ for print */
+
+  /* calmer borders */
+  th, td { border-color:#e5e5e5 }
+}
+
