@@ -41,8 +41,7 @@ function buildProxyQuery({ q, perMealCalories, diet, health, cuisine, timeRange 
   });
 
   if (Number.isFinite(perMealCalories)) {
-    // server converts this to a range
-    params.set("perMealCalories", String(perMealCalories));
+    params.set("perMealCalories", String(perMealCalories)); // server converts to range
   }
   if (diet)      params.set("diet", diet);
   if (health)    params.set("health", health);
@@ -112,12 +111,12 @@ function renderTable(grid) {
         ${row.map(rec => `
           <td style="min-width:220px;">
             <div style="font-weight:700;margin-bottom:4px;">
-              <a href="${rec.url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:#ffffff;">
+              <a href="${rec.url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:#111;">
                 ${rec.label}
               </a>
             </div>
             <img class="recipe" src="${rec.image}" alt="${rec.label}" />
-            <div style="margin:6px 0 4px; font-size:13px; color:#e5e7eb;">
+            <div style="margin:6px 0 4px; font-size:13px;" class="muted">
               ~${kcalPerServing(rec)} kcal/serving${Number.isFinite(rec.totalTime) ? ` • ${rec.totalTime} min` : ""}
             </div>
             ${macroChipsHTML(rec)}
@@ -129,12 +128,24 @@ function renderTable(grid) {
   return `<table>${thead}${tbody}</table>`;
 }
 
+// ------- print helpers -------
+function waitForImages(container) {
+  const imgs = Array.from(container.querySelectorAll('img'));
+  if (!imgs.length) return Promise.resolve();
+  return Promise.all(
+    imgs.map(img => (img.complete ? Promise.resolve() : new Promise(res => {
+      img.onload = img.onerror = () => res();
+    })))
+  );
+}
+
 // ------- main -------
 document.addEventListener("DOMContentLoaded", () => {
   const form = $('meal-form');
   const statusEl = $('status');
   const resultsEl = $('results');
   const calChip = $('cal-output');
+  const downloadBtn = $('download-pdf');
 
   const setStatus = (msg) => {
     if (!statusEl) return;
@@ -148,10 +159,27 @@ document.addEventListener("DOMContentLoaded", () => {
     resultsEl.innerHTML = "";
     setStatus("");
     if (calChip) calChip.textContent = "Daily calories: —";
+    if (downloadBtn) downloadBtn.disabled = true;
     window.scrollTo({ top: 0, behavior: "smooth" });
     $('age')?.focus();
   }
   $('home-reset')?.addEventListener('click', resetAll);
+
+  // Download PDF click
+  downloadBtn?.addEventListener('click', async () => {
+    if (!resultsEl.innerHTML.trim()) return;
+    downloadBtn.disabled = true;
+    document.body.classList.add('printing');
+    try {
+      await waitForImages(resultsEl);
+    } finally {
+      window.print();
+      setTimeout(() => {
+        document.body.classList.remove('printing');
+        downloadBtn.disabled = false;
+      }, 300);
+    }
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -184,9 +212,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (quick === "10") timeRange = "1-10";
     else if (quick === "20") timeRange = "1-20";
     else if (quick === "30+") timeRange = "30-180";
-    // "none" => no time filter
 
     setStatus(""); resultsEl.innerHTML = "";
+    downloadBtn && (downloadBtn.disabled = true);
 
     try {
       const pool = await fetchPool({
@@ -203,6 +231,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       const grid = buildWeeklyPlan(pool, meals);
       resultsEl.innerHTML = renderTable(grid);
+      downloadBtn && (downloadBtn.disabled = false);
+      resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (err) {
       setStatus(err.message || "Something went wrong.");
     }
