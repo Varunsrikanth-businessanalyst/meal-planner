@@ -7,6 +7,7 @@
   --text:#ECECF1;
   --muted:#C7C9D1;
   --chip:#2b2c34;
+  --accent:#6b6ef9;
 }
 
 *{box-sizing:border-box}
@@ -15,6 +16,9 @@ body{
   margin:0; background:var(--bg); color:var(--text);
   font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
 }
+
+/* Utility */
+[hidden]{display:none !important}
 
 .wrap{min-height:100%; display:grid; place-items:center; padding:28px 14px}
 .card{
@@ -28,42 +32,41 @@ body{
   gap:12px; padding:0 2px 10px; border-bottom:1px solid var(--border);
 }
 .pill{
-  display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px;
+  display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:999px;
   border:1px solid var(--border); background:transparent; color:var(--text);
-  font-size:12px; font-weight:600;
+  font-size:12px; font-weight:700; letter-spacing:.2px;
 }
 .title-link{
   background:none; border:none; padding:0; color:inherit; font:inherit; font-size:24px; font-weight:700; letter-spacing:.2px; cursor:pointer;
 }
 .title-link:hover{opacity:.92}
 
-/* grid form */
+/* --- Form Grid --- */
 .form{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; padding:12px 2px 8px}
 .field{display:flex; flex-direction:column; gap:6px}
 .field--span2{grid-column:1 / -1}
 label span{font-size:12px; color:var(--muted)}
 
 input,select{
-  width:100%; padding:10px 12px; border-radius:8px; background:var(--input); color:var(--text);
-  border:1px solid var(--border); outline:none;
+  width:100%; padding:12px 14px; border-radius:12px; background:var(--input); color:var(--text);
+  border:1px solid var(--border); outline:none; min-height:44px; /* touch target */
+  font-size:16px;
 }
 input::placeholder{color:#9ea2ad}
 input:focus,select:focus{box-shadow:0 0 0 2px rgba(255,255,255,.06)}
 
 .actions{display:flex; align-items:center; gap:10px; margin-top:2px}
 .btn{
-  appearance:none; border:none; cursor:pointer; padding:10px 16px; border-radius:8px;
-  background:#565869; color:#fff; font-weight:700; letter-spacing:.2px; transition:filter .15s ease, transform .05s ease;
+  appearance:none; border:none; cursor:pointer; padding:12px 18px; border-radius:12px;
+  background:#565869; color:#fff; font-weight:800; letter-spacing:.2px; transition:filter .15s ease, transform .05s ease;
+  min-height:44px;
 }
 .btn:hover{filter:brightness(1.06)}
 .btn:active{transform:translateY(1px)}
-.btn--ghost{
-  background:transparent; border:1px solid var(--border); color:#fff;
-}
 .status{color:#ffcccc; font-size:12px; display:none}
 .status.show{display:inline}
 
-/* results */
+/* --- Desktop table results (unchanged) --- */
 .results{padding:8px 0 4px; overflow:auto}
 table{border-collapse:collapse; width:100%; min-width:920px}
 th,td{vertical-align:top; padding:10px; border-bottom:1px solid var(--border)}
@@ -72,162 +75,73 @@ td{ font-size:14px}
 td:first-child{ font-weight:700}
 .recipe{ width:100%; height:auto; border-radius:8px; border:1px solid var(--border); display:block; margin:8px 0 }
 
-.recipe-title a{ text-decoration:none; color:#ffffff; font-weight:700; }
-.recipe-meta{ margin:6px 0 4px; font-size:13px; color:#e5e7eb; }
-.recipe-cell{ min-width:220px; }
-
+/* --- Reusable macro chips --- */
 .macros{ display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 8px}
 .chip{ display:inline-flex; align-items:center; gap:6px; background:var(--chip); border:1px solid var(--border); padding:4px 10px; border-radius:999px; font-size:12px; color:#e7e8ec}
 .chip__dot{ width:6px; height:6px; border-radius:50%; background:#9aa0aa}
 
+/* --- Mobile layout (Phase 1 + Phase 2) --- */
 @media (max-width:820px){
+  html,body{font-size:16px}
   .form{grid-template-columns:1fr}
   .card__header{flex-direction:column; align-items:flex-start; gap:8px}
-  .pill{align-self:flex-start}
+  .pill{align-self:flex-start; position:sticky; top:6px; z-index:2}
+
+  /* sticky action bar for submit */
+  .actions{
+    position:sticky; bottom:8px; padding:8px; border-radius:12px;
+    background:linear-gradient(180deg, rgba(64,65,79,.2), rgba(64,65,79,.8));
+    backdrop-filter:saturate(140%) blur(4px);
+    z-index:5;
+  }
+
+  /* use mobile card layout; hide desktop table on phones */
+  .results{display:none}
+  .mobile-results{display:block; padding:8px 0 12px}
 }
 
-/* =========================
-   PRINT STYLES (PDF output)
-   ========================= */
-@media print {
-  /* Page setup */
-  @page { size: A4; margin: 12mm; }
-
-  /* Remove dark theme & gradients for clean paper output */
-  body { background: #fff !important; color: #000 !important; }
-  .wrap { padding: 0 !important; display: block; }
-  .card {
-    width: auto !important;
-    border: none !important;
-    background: #fff !important;
-    padding: 0 !important;
-  }
-
-  /* Header: keep title + calories pill, make them print-friendly */
-  .card__header {
-    border: none !important;
-    padding: 0 0 8mm 0 !important;
-    margin: 0 !important;
-  }
-  .title-link { 
-    font-size: 20px !important; 
-    color: #000 !important;
-    text-align: left !important;
-  }
-  .pill {
-    border: 1px solid #000 !important;
-    color: #000 !important;
-    padding: 4px 8px !important;
-  }
-
-  /* Hide interactive UI in print */
-  .form,
-  .actions,
-  .status,
-  #home-reset { display: none !important; }
-
-  /* Results table: no sticky headers, lighter borders, good pagination */
-  .results { overflow: visible !important; padding: 0 !important; }
-  table { width: 100% !important; min-width: 0 !important; border-collapse: collapse !important; }
-  th, td { 
-    border-bottom: 1px solid #ccc !important; 
-    color: #000 !important; 
-    background: #fff !important;
-  }
-  th { 
-    position: static !important; 
-    top: auto !important; 
-    font-size: 11px !important; 
-    color: #000 !important;
-  }
-  td { font-size: 12px !important; }
-
-  /* Avoid breaking inside cells/rows with images and lists */
-  tr, td, img, ul { break-inside: avoid !important; page-break-inside: avoid !important; }
-  tr { page-break-after: auto !important; }
-
-  /* Images: scale for page */
-  .recipe { 
-    max-height: 120mm !important; 
-    width: 100% !important; 
-    object-fit: cover !important; 
-    border: 1px solid #ccc !important;
-  }
-
-  /* Links as plain text color */
-  .recipe-title a { color: #000 !important; text-decoration: none !important; }
-
-  /* Chips: simplify */
-  .chip { 
-    background: #fff !important; 
-    border: 1px solid #bbb !important; 
-    color: #000 !important;
-  }
-  .chip__dot { background: #000 !important; }
+/* Day tabs (scrollable) */
+.day-tabs{
+  display:flex; gap:8px; overflow:auto; padding:8px 2px 0; margin-top:2px;
+  border-top:1px solid var(--border);
+}
+.day-tab{
+  flex:0 0 auto; padding:8px 12px; border-radius:999px; border:1px solid var(--border);
+  color:var(--text); background:var(--chip); font-weight:700; font-size:13px; cursor:pointer;
+}
+.day-tab.is-active{
+  background:var(--accent); border-color:transparent; color:#fff;
 }
 
-/* optional: a subtle ghost button look */
-.btn--ghost{
-  background:transparent;
-  border:1px solid var(--border);
-  color:var(--text);
+/* Meal cards */
+.mobile-results .day-section{display:grid; gap:12px; margin-top:12px}
+.meal-card{
+  border:1px solid var(--border); border-radius:12px; padding:10px; background:rgba(255,255,255,.02);
+}
+.meal-card__header{
+  display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px;
+}
+.meal-card__title{
+  font-weight:800; font-size:16px; line-height:1.2;
+}
+.meal-card__link{color:#fff; text-decoration:none}
+.meal-card__meta{font-size:12px; color:#e5e7eb}
+
+.meal-card__img{
+  width:100%; aspect-ratio:4/3; object-fit:cover;
+  display:block; border-radius:10px; border:1px solid var(--border); margin:6px 0 8px;
 }
 
-/* ---------- PRINT LAYOUT ---------- */
-@page {
-  size: A4 landscape;              /* Force landscape */
-  margin: 10mm;                    /* Printer-friendly margins */
+.meal-card ul{margin:6px 0 0 18px; padding:0}
+.meal-card li{margin:2px 0}
+
+/* PRINT (keeps the desktop table format to fit pages) */
+@media print{
+  body{background:#fff; color:#000}
+  .wrap{padding:0}
+  .card{border:none}
+  .form, .day-tabs, .mobile-results, .actions, .title-link{display:none !important}
+  .results{display:block !important; overflow:visible}
+  .pill{position:static; color:#000; border-color:#ccc}
+  table{min-width:auto}
 }
-
-@media print {
-
-  /* neutral page colors */
-  :root { --bg:#fff; --panel:#fff; --panel-2:#fff; --text:#000; --border:#ddd; --chip:#f5f5f5; }
-  body { background:#fff; color:#000; }
-  a { color:#000; text-decoration:none; }
-
-  .wrap{ padding:0 }
-  .card{ border:0; background:#fff; padding:8mm 0 0 }
-  .card__header{ border:0; padding:0 0 6px }
-
-  /* show only the results + title */
-  .form, #home-reset, .status { display:none !important; }
-  .pill{ border:0; background:#fff; color:#000 }
-
-  /* table tweaks to fit 7 columns comfortably */
-  .results{ overflow:visible }
-  table{ width:100%; min-width:auto; table-layout:fixed; border-collapse:collapse }
-  th, td{
-    padding:6px;
-    border:1px solid #ddd;
-    vertical-align:top;
-    font-size:12px;
-  }
-  th{
-    position:static;               /* turn off sticky header for print */
-    background:#fff; color:#000;
-  }
-
-  /* override inline min-width:220px from JS */
-  td{ min-width:175px !important; }
-
-  /* smaller imagery & chips so more fits per page */
-  .recipe{
-    width:100%; height:auto;
-    max-height:110px;
-    object-fit:cover;
-    border:1px solid #ddd;
-  }
-  .macros{ gap:4px; margin:4px 0 6px }
-  .chip{ padding:2px 6px; font-size:10px; background:#f5f5f5; border-color:#ddd; color:#000 }
-  .chip__dot{ width:4px; height:4px }
-
-  /* ingredients list: show first 6 lines to limit overflow */
-  ul{ margin:4px 0 0 16px; padding:0 }
-  ul li{ font-size:11px; line-height:1.25 }
-  ul li:nth-child(n+7){ display:none }   /* hide 7th+ for print */
-
-  /* calmer borders */
-  th, td { border-color:#e5e5e5 }
-}
-
