@@ -57,16 +57,9 @@ input:focus,select:focus{box-shadow:0 0 0 2px rgba(255,255,255,.06)}
 }
 .btn:hover{filter:brightness(1.06)}
 .btn:active{transform:translateY(1px)}
-.btn[disabled]{opacity:.6; cursor:not-allowed}
-
-/* subtle ghost button (for Download PDF) */
-.btn-ghost{
-  background:transparent;
-  border:1px solid var(--border);
-  color:var(--text);
+.btn--ghost{
+  background:transparent; border:1px solid var(--border); color:#fff;
 }
-.btn-ghost:hover{filter:none; background:rgba(255,255,255,0.04)}
-
 .status{color:#ffcccc; font-size:12px; display:none}
 .status.show{display:inline}
 
@@ -79,43 +72,96 @@ td{ font-size:14px}
 td:first-child{ font-weight:700}
 .recipe{ width:100%; height:auto; border-radius:8px; border:1px solid var(--border); display:block; margin:8px 0 }
 
+.recipe-title a{ text-decoration:none; color:#ffffff; font-weight:700; }
+.recipe-meta{ margin:6px 0 4px; font-size:13px; color:#e5e7eb; }
+.recipe-cell{ min-width:220px; }
+
 .macros{ display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 8px}
 .chip{ display:inline-flex; align-items:center; gap:6px; background:var(--chip); border:1px solid var(--border); padding:4px 10px; border-radius:999px; font-size:12px; color:#e7e8ec}
 .chip__dot{ width:6px; height:6px; border-radius:50%; background:#9aa0aa}
-.muted{ color:#e5e7eb }
 
-/* Responsive */
 @media (max-width:820px){
   .form{grid-template-columns:1fr}
   .card__header{flex-direction:column; align-items:flex-start; gap:8px}
   .pill{align-self:flex-start}
 }
 
-/* ---------- Print styles (for clean PDF) ---------- */
+/* =========================
+   PRINT STYLES (PDF output)
+   ========================= */
 @media print {
-  :root{
-    /* light theme for print */
-    --bg:#ffffff;
-    --panel:#ffffff;
-    --panel-2:#ffffff;
-    --input:#ffffff;
-    --border:#cccccc;
-    --text:#111111;
-    --chip:#f3f4f6;
-    --muted:#555;
+  /* Page setup */
+  @page { size: A4; margin: 12mm; }
+
+  /* Remove dark theme & gradients for clean paper output */
+  body { background: #fff !important; color: #000 !important; }
+  .wrap { padding: 0 !important; display: block; }
+  .card {
+    width: auto !important;
+    border: none !important;
+    background: #fff !important;
+    padding: 0 !important;
   }
 
-  body{ background:#fff; color:#111; }
-  .wrap{ padding:0 }
-  .card{ border:none; background:#fff; }
-  .card__header{ border-bottom:1px solid #ddd }
-  .title-link{ display:none !important; }      /* hide the clickable title */
-  .form, .actions{ display:none !important; }  /* hide form & buttons */
-  .results{ overflow:visible; }
+  /* Header: keep title + calories pill, make them print-friendly */
+  .card__header {
+    border: none !important;
+    padding: 0 0 8mm 0 !important;
+    margin: 0 !important;
+  }
+  .title-link { 
+    font-size: 20px !important; 
+    color: #000 !important;
+    text-align: left !important;
+  }
+  .pill {
+    border: 1px solid #000 !important;
+    color: #000 !important;
+    padding: 4px 8px !important;
+  }
 
-  th{ background:#f5f5f5; color:#111; position:static; }
-  a{ color:#111 !important; text-decoration:none; }
+  /* Hide interactive UI in print */
+  .form,
+  .actions,
+  .status,
+  #home-reset { display: none !important; }
 
-  /* avoid breaking recipe card across pages */
-  tr, td, img.recipe { break-inside: avoid; page-break-inside: avoid; }
+  /* Results table: no sticky headers, lighter borders, good pagination */
+  .results { overflow: visible !important; padding: 0 !important; }
+  table { width: 100% !important; min-width: 0 !important; border-collapse: collapse !important; }
+  th, td { 
+    border-bottom: 1px solid #ccc !important; 
+    color: #000 !important; 
+    background: #fff !important;
+  }
+  th { 
+    position: static !important; 
+    top: auto !important; 
+    font-size: 11px !important; 
+    color: #000 !important;
+  }
+  td { font-size: 12px !important; }
+
+  /* Avoid breaking inside cells/rows with images and lists */
+  tr, td, img, ul { break-inside: avoid !important; page-break-inside: avoid !important; }
+  tr { page-break-after: auto !important; }
+
+  /* Images: scale for page */
+  .recipe { 
+    max-height: 120mm !important; 
+    width: 100% !important; 
+    object-fit: cover !important; 
+    border: 1px solid #ccc !important;
+  }
+
+  /* Links as plain text color */
+  .recipe-title a { color: #000 !important; text-decoration: none !important; }
+
+  /* Chips: simplify */
+  .chip { 
+    background: #fff !important; 
+    border: 1px solid #bbb !important; 
+    color: #000 !important;
+  }
+  .chip__dot { background: #000 !important; }
 }
