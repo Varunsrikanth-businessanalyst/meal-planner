@@ -152,6 +152,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   $('home-reset')?.addEventListener('click', resetAll);
 
+  // Download PDF -> opens print dialog with our print CSS
+$('download-pdf')?.addEventListener('click', () => {
+  window.print();
+});
+
   // NEW: Print / Save as PDF
   $('download-pdf')?.addEventListener('click', () => {
     // If you ever want to hide the form only when there are results:
