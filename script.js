@@ -7,6 +7,8 @@ const CONFIG = {
 const WEEKDAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const $ = (id) => document.getElementById(id);
 
+const isMobile = () => window.matchMedia("(max-width: 820px)").matches;
+
 // ------- Calorie math (Harris–Benedict) -------
 function calcBMR({ gender, weight, height, age }) {
   return (gender === "male")
@@ -116,7 +118,7 @@ function renderTable(grid) {
                 ${rec.label}
               </a>
             </div>
-            <img class="recipe" src="${rec.image}" alt="${rec.label}" />
+            <img class="recipe" src="${rec.image}" alt="${rec.label}" loading="lazy" />
             <div style="margin:6px 0 4px; font-size:13px; color:#e5e7eb;">
               ~${kcalPerServing(rec)} kcal/serving${Number.isFinite(rec.totalTime) ? ` • ${rec.totalTime} min` : ""}
             </div>
@@ -129,33 +131,52 @@ function renderTable(grid) {
   return `<table>${thead}${tbody}</table>`;
 }
 
-// ------- mobile rendering (cards) -------
-function renderMobile(grid) {
-  // make one column of cards, grouped by weekday headers
-  let html = `<div class="mobile-grid">`;
-  WEEKDAYS.forEach((day, idx) => {
-    html += `<div class="mobile-card"><h4>${day}</h4>`;
-    grid.forEach((row) => {
-      const rec = row[idx];
-      html += `
-        <div style="margin:8px 0 14px">
-          <div style="font-weight:700;margin-bottom:4px;">
-            <a href="${rec.url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:#ffffff;">
-              ${rec.label}
-            </a>
-          </div>
-          <img class="recipe" src="${rec.image}" alt="${rec.label}" />
-          <div style="margin:6px 0 4px; font-size:13px; color:#e5e7eb;">
-            ~${kcalPerServing(rec)} kcal/serving${Number.isFinite(rec.totalTime) ? ` • ${rec.totalTime} min` : ""}
-          </div>
-          ${macroChipsHTML(rec)}
-          ${ingredientsHTML(rec.ingredientLines, 6)}
-        </div>`;
+// ------- Phase 2: mobile card layout -------
+function cardHTML(rec, mealIndex) {
+  return `
+    <article class="meal-card">
+      <div class="meal-card__header">
+        <div class="meal-card__title">Meal ${mealIndex + 1}</div>
+        <div class="meal-card__meta">~${kcalPerServing(rec)} kcal${Number.isFinite(rec.totalTime) ? ` • ${rec.totalTime} min` : ""}</div>
+      </div>
+      <a class="meal-card__link" href="${rec.url}" target="_blank" rel="noopener noreferrer">
+        <img class="meal-card__img" src="${rec.image}" alt="${rec.label}" loading="lazy" />
+      </a>
+      <div style="font-weight:700; margin:4px 0 2px;">
+        <a class="meal-card__link" href="${rec.url}" target="_blank" rel="noopener noreferrer">${rec.label}</a>
+      </div>
+      ${macroChipsHTML(rec)}
+      ${ingredientsHTML(rec.ingredientLines)}
+    </article>`;
+}
+
+function renderMobile(grid, dayIndex = 0) {
+  const tabsEl = $('day-tabs');
+  const mobEl  = $('mobile-results');
+
+  // Tabs
+  tabsEl.innerHTML = WEEKDAYS.map((d, i) =>
+    `<button class="day-tab ${i===dayIndex?'is-active':''}" data-day="${i}" type="button">${d}</button>`
+  ).join("");
+  tabsEl.hidden = false;
+
+  // Cards for the selected day
+  const cards = grid.map((row, rIdx) => cardHTML(row[dayIndex], rIdx)).join("");
+  mobEl.innerHTML = `<section class="day-section">${cards}</section>`;
+  mobEl.hidden = false;
+
+  // Wire up tab clicks
+  tabsEl.querySelectorAll(".day-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.dataset.day || 0);
+      tabsEl.querySelectorAll(".day-tab").forEach(b => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+
+      const html = grid.map((row, rIdx) => cardHTML(row[idx], rIdx)).join("");
+      mobEl.innerHTML = `<section class="day-section">${html}</section>`;
+      mobEl.scrollIntoView({ behavior: "smooth", block: "start" });
     });
-    html += `</div>`;
   });
-  html += `</div>`;
-  return html;
 }
 
 // ------- main -------
@@ -163,10 +184,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = $('meal-form');
   const statusEl = $('status');
   const resultsEl = $('results');
-  const mobileEl = $('mobile-results');
   const calChip = $('cal-output');
-  const exportBar = $('export-bar');
-  const downloadBtn = $('download-pdf');
+  const dayTabsEl = $('day-tabs');
+  const mobResultsEl = $('mobile-results');
 
   const setStatus = (msg) => {
     if (!statusEl) return;
@@ -178,19 +198,17 @@ document.addEventListener("DOMContentLoaded", () => {
   function resetAll() {
     form.reset();
     resultsEl.innerHTML = "";
-    mobileEl.innerHTML = "";
-    exportBar.classList.add("hidden");
+    mobResultsEl.innerHTML = "";
+    dayTabsEl.innerHTML = "";
+    resultsEl.hidden = false;
+    mobResultsEl.hidden = true;
+    dayTabsEl.hidden = true;
     setStatus("");
     if (calChip) calChip.textContent = "Daily calories: —";
     window.scrollTo({ top: 0, behavior: "smooth" });
     $('age')?.focus();
   }
   $('home-reset')?.addEventListener('click', resetAll);
-
-  downloadBtn?.addEventListener('click', () => {
-    // print everything (CSS ensures full multi-page)
-    window.print();
-  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -223,9 +241,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (quick === "10") timeRange = "1-10";
     else if (quick === "20") timeRange = "1-20";
     else if (quick === "30+") timeRange = "30-180";
-    // "none" => no time filter
 
-    setStatus(""); resultsEl.innerHTML = ""; mobileEl.innerHTML = ""; exportBar.classList.add("hidden");
+    setStatus(""); resultsEl.innerHTML = "";
+    mobResultsEl.innerHTML = ""; dayTabsEl.innerHTML = "";
+    resultsEl.hidden = !isMobile();   // we'll flip after render
+    mobResultsEl.hidden = true;
+    dayTabsEl.hidden = true;
 
     try {
       const pool = await fetchPool({
@@ -241,19 +262,37 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
       const grid = buildWeeklyPlan(pool, meals);
-      resultsEl.innerHTML = renderTable(grid);
-      mobileEl.innerHTML = renderMobile(grid);
 
-      // reveal PDF button
-      exportBar.classList.remove("hidden");
-      // scroll to results on mobile for convenience
-      if (window.matchMedia("(max-width: 820px)").matches) {
-        mobileEl.scrollIntoView({ behavior: "smooth" });
+      if (isMobile()) {
+        // Mobile: day tabs + meal cards
+        resultsEl.hidden = true;
+        renderMobile(grid, 0);
       } else {
-        resultsEl.scrollIntoView({ behavior: "smooth" });
+        // Desktop: table
+        dayTabsEl.hidden = true;
+        mobResultsEl.hidden = true;
+        resultsEl.hidden = false;
+        resultsEl.innerHTML = renderTable(grid);
       }
     } catch (err) {
       setStatus(err.message || "Something went wrong.");
+    }
+  });
+
+  // Re-render layout type on resize (optional nicety)
+  window.addEventListener("resize", () => {
+    // No heavy rework here; next search will render into the new layout.
+    // This just toggles visibility if content exists.
+    const hasMobile = $('mobile-results')?.innerHTML.trim().length > 0;
+    const hasDesktop = $('results')?.innerHTML.trim().length > 0;
+    if (isMobile() && hasMobile) {
+      $('results').hidden = true;
+      $('day-tabs').hidden = false;
+      $('mobile-results').hidden = false;
+    } else if (!isMobile() && hasDesktop) {
+      $('results').hidden = false;
+      $('day-tabs').hidden = true;
+      $('mobile-results').hidden = true;
     }
   });
 });
