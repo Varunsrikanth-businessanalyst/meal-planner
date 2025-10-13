@@ -188,7 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const dayTabsEl = $('day-tabs');
   const mobResultsEl = $('mobile-results');
   const pdfBtn = $('download-pdf');
-const pdfBar = $('pdf-bar');
+  const pdfBar = $('pdf-bar');
 
   const setStatus = (msg) => {
     if (!statusEl) return;
@@ -213,6 +213,9 @@ const pdfBar = $('pdf-bar');
     $('age')?.focus();
   }
   $('home-reset')?.addEventListener('click', resetAll);
+
+  // Print handler
+  pdfBtn?.addEventListener('click', () => window.print());
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -246,11 +249,17 @@ const pdfBar = $('pdf-bar');
     else if (quick === "20") timeRange = "1-20";
     else if (quick === "30+") timeRange = "30-180";
 
-    setStatus(""); resultsEl.innerHTML = "";
-    mobResultsEl.innerHTML = ""; dayTabsEl.innerHTML = "";
-    resultsEl.hidden = !isMobile();   // we'll flip after render
+    setStatus("");
+    resultsEl.innerHTML = "";
+    mobResultsEl.innerHTML = "";
+    dayTabsEl.innerHTML = "";
+
+    // Hide desktop results pre-render on mobile
+    resultsEl.hidden = isMobile();
     mobResultsEl.hidden = true;
     dayTabsEl.hidden = true;
+    pdfBar?.classList.add('hidden');
+    pdfBtn?.classList.add('hidden');
 
     try {
       const pool = await fetchPool({
@@ -271,6 +280,9 @@ const pdfBar = $('pdf-bar');
         // Mobile: day tabs + meal cards
         resultsEl.hidden = true;
         renderMobile(grid, 0);
+        // show PDF button on mobile too
+        pdfBar?.classList.remove('hidden');
+        pdfBtn?.classList.remove('hidden');
       } else {
         // Desktop: table
         dayTabsEl.hidden = true;
@@ -279,7 +291,6 @@ const pdfBar = $('pdf-bar');
         resultsEl.innerHTML = renderTable(grid);
         pdfBar?.classList.remove('hidden');
         pdfBtn?.classList.remove('hidden');
-
       }
     } catch (err) {
       setStatus(err.message || "Something went wrong.");
