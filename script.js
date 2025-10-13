@@ -214,8 +214,17 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   $('home-reset')?.addEventListener('click', resetAll);
 
-  // Print handler
-  pdfBtn?.addEventListener('click', () => window.print());
+  // Print handler (ensures table exists for print, even on mobile)
+  pdfBtn?.addEventListener('click', () => {
+    const hasTable = $('results')?.innerHTML.trim().length > 0;
+    const hasMobile = $('mobile-results')?.innerHTML.trim().length > 0;
+    if (!hasTable && hasMobile) {
+      // If user generated mobile-only view, synthesize a print table from current mobile grid
+      // (We can't reconstruct grid here without state; normally this won't run because we render it at generate time below)
+    }
+    window.scrollTo(0, 0);
+    window.print();
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -280,6 +289,10 @@ document.addEventListener("DOMContentLoaded", () => {
         // Mobile: day tabs + meal cards
         resultsEl.hidden = true;
         renderMobile(grid, 0);
+
+        // IMPORTANT: also render a hidden desktop table for printing
+        resultsEl.innerHTML = renderTable(grid);
+
         // show PDF button on mobile too
         pdfBar?.classList.remove('hidden');
         pdfBtn?.classList.remove('hidden');
