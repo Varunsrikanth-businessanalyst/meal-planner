@@ -4,7 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Meal Plan Generator</title>
+
+  <!-- Screen styles -->
   <link href="./styles.css?v=8" rel="stylesheet" />
+  <!-- Print stylesheet already handled inside styles.css (@media print) -->
 </head>
 <body>
   <main class="wrap">
@@ -97,7 +100,7 @@
           </select>
         </label>
 
-        <!-- Row 5 (two halves): Health Specification | Quick recipes -->
+        <!-- Row 5 -->
         <label class="field">
           <span>Health Specification</span>
           <select id="healthSpec" required>
@@ -122,11 +125,15 @@
         <!-- Actions -->
         <div class="actions field--span2">
           <button type="submit" class="btn">Generate Meal Plan</button>
-          <button id="download-pdf" type="button" class="btn btn--ghost">Download PDF</button>
           <span id="status" class="status" role="status" aria-live="polite"></span>
         </div>
       </form>
 
+      <!-- Phase 2: mobile UI containers -->
+      <div id="day-tabs" class="day-tabs" hidden></div>
+      <div id="mobile-results" class="mobile-results" hidden></div>
+
+      <!-- Desktop results table (unchanged) -->
       <div id="results" class="results"></div>
     </section>
   </main>
