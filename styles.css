@@ -80,6 +80,29 @@ td:first-child{ font-weight:700}
 .chip{ display:inline-flex; align-items:center; gap:6px; background:var(--chip); border:1px solid var(--border); padding:4px 10px; border-radius:999px; font-size:12px; color:#e7e8ec}
 .chip__dot{ width:6px; height:6px; border-radius:50%; background:#9aa0aa}
 
+/* utility */
+.hidden { display: none !important; }
+
+/* PDF action bar */
+.pdf-bar { margin: 12px 2px 0; }
+
+/* keep the bar reachable on phones */
+@media (max-width: 820px){
+  .pdf-bar {
+    position: sticky;
+    bottom: 8px;
+    z-index: 20;
+    padding: 8px 0;
+    background: linear-gradient(180deg, rgba(52,53,65,0) 0%, rgba(52,53,65,0.85) 30%, rgba(52,53,65,1) 100%);
+    backdrop-filter: blur(2px);
+  }
+}
+
+/* don't print the button */
+@media print {
+  .no-print { display: none !important; }
+}
+
 /* --- Mobile layout (Phase 1 + Phase 2) --- */
 @media (max-width:820px){
   html,body{font-size:16px}
