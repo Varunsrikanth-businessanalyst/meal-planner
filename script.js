@@ -187,6 +187,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const calChip = $('cal-output');
   const dayTabsEl = $('day-tabs');
   const mobResultsEl = $('mobile-results');
+  const pdfBtn = $('download-pdf');
+const pdfBar = $('pdf-bar');
 
   const setStatus = (msg) => {
     if (!statusEl) return;
@@ -199,6 +201,8 @@ document.addEventListener("DOMContentLoaded", () => {
     form.reset();
     resultsEl.innerHTML = "";
     mobResultsEl.innerHTML = "";
+    pdfBar?.classList.add('hidden');
+    pdfBtn?.classList.add('hidden');
     dayTabsEl.innerHTML = "";
     resultsEl.hidden = false;
     mobResultsEl.hidden = true;
@@ -273,6 +277,9 @@ document.addEventListener("DOMContentLoaded", () => {
         mobResultsEl.hidden = true;
         resultsEl.hidden = false;
         resultsEl.innerHTML = renderTable(grid);
+        pdfBar?.classList.remove('hidden');
+        pdfBtn?.classList.remove('hidden');
+
       }
     } catch (err) {
       setStatus(err.message || "Something went wrong.");
