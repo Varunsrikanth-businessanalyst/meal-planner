@@ -214,8 +214,22 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   $('home-reset')?.addEventListener('click', resetAll);
 
-  // Print handler (ensures table exists for print, even on mobile)
-  pdfBtn?.addEventListener('click', () => {
+  // Print handler (mobile-safe, works in most WebViews)
+document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('#download-pdf');
+  if (!btn) return;
+  ev.preventDefault();
+  btn.blur();
+
+  // Try synchronously first (required on iOS)
+  try { window.print(); } catch (_) {}
+
+  // Some in-app browsers/webviews only react on a tick later
+  setTimeout(() => {
+    try { window.print(); } catch (_) {}
+  }, 0);
+});
+
     const hasTable = $('results')?.innerHTML.trim().length > 0;
     const hasMobile = $('mobile-results')?.innerHTML.trim().length > 0;
     if (!hasTable && hasMobile) {
