@@ -221,24 +221,14 @@ document.addEventListener('click', (ev) => {
   ev.preventDefault();
   btn.blur();
 
-  // Try synchronously first (required on iOS)
+  // iOS Safari requires the print to be inside the user-initiated handler
   try { window.print(); } catch (_) {}
 
-  // Some in-app browsers/webviews only react on a tick later
+  // Some webviews react a tick later
   setTimeout(() => {
     try { window.print(); } catch (_) {}
   }, 0);
 });
-
-    const hasTable = $('results')?.innerHTML.trim().length > 0;
-    const hasMobile = $('mobile-results')?.innerHTML.trim().length > 0;
-    if (!hasTable && hasMobile) {
-      // If user generated mobile-only view, synthesize a print table from current mobile grid
-      // (We can't reconstruct grid here without state; normally this won't run because we render it at generate time below)
-    }
-    window.scrollTo(0, 0);
-    window.print();
-  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
