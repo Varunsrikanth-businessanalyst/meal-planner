@@ -158,13 +158,48 @@ td:first-child{ font-weight:700}
 .meal-card ul{margin:6px 0 0 18px; padding:0}
 .meal-card li{margin:2px 0}
 
-/* PRINT (keeps the desktop table format to fit pages) */
+/* ============================= */
+/*     PRINT — UPDATED BLOCK     */
+/* ============================= */
+
+/* Force paper to landscape and add margins so 7 columns fit */
+@page {
+  size: A4 landscape;
+  margin: 10mm;
+}
+
 @media print{
-  body{background:#fff; color:#000}
-  .wrap{padding:0}
-  .card{border:none}
-  .form, .day-tabs, .mobile-results, .actions, .title-link{display:none !important}
-  .results{display:block !important; overflow:visible}
+  /* exact color so chips/borders are visible */
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  html, body { height:auto; background:#fff !important; color:#000 !important; }
+  .wrap{ display:block; padding:0 }
+  .card{
+    border:none; width:auto;
+    background:#fff !important;
+  }
+
+  /* Hide UI, show table */
+  .form, .day-tabs, .mobile-results, .actions, .title-link, .no-print { display:none !important }
+  .results{ display:block !important; overflow:visible !important }
+
+  /* Fit table to page, no sticky headers */
+  table{ min-width:0 !important; width:100% !important; table-layout:auto; }
+  th, td { font-size:11px; color:#000 !important; }
+  th{
+    position: static !important;
+    top: auto !important;
+    background:#fff !important;
+  }
+
+  /* Avoid awkward page breaks */
+  tr, td, img.recipe { page-break-inside: avoid; }
+  tbody { page-break-inside: auto; }
+
+  /* Badges contrast in print */
+  .chip{ border-color:#999 }
+  .chip__dot{ background:#666 }
+
+  /* Keep the pill readable if shown */
   .pill{position:static; color:#000; border-color:#ccc}
-  table{min-width:auto}
 }
