@@ -261,3 +261,12 @@ td:first-child{ font-weight:700}
     padding: 16px 10px !important;
   }
 }
+/* =========== MOBILE BACKGROUND ALIGNMENT =========== */
+@media (max-width: 820px){
+  /* Move the focal point down and zoom in a little */
+  body{
+    background-attachment: scroll !important;       /* iOS fix */
+    background-position: center 22% !important;     /* was center center */
+    background-size: 110% auto !important;          /* gentle zoom to avoid awkward edges */
+  }
+}
