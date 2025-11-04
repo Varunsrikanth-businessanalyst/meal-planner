@@ -64,6 +64,39 @@ async function fetchPool(opts) {
   }
   return (data.hits || []).map(h => h.recipe);
 }
+// ------- slot logic (breakfast / snack / lunch / dinner) -------
+function mealSlotsForCount(meals) {
+  if (meals === 3) return ["breakfast", "lunch", "dinner"];
+  if (meals === 4) return ["breakfast", "snack", "lunch", "dinner"];
+  if (meals === 5) return ["breakfast", "snack", "lunch", "snack", "dinner"];
+  // fallback
+  return Array.from({ length: meals }, (_, i) => (i === 0 ? "breakfast" : i === meals - 1 ? "dinner" : "lunch"));
+}
+
+// Calorie weights per slot (sums ≈ 1.0)
+function slotWeightsForSlots(slots) {
+  const map = {
+    breakfast: 0.30,
+    snack:     0.10,
+    lunch:     0.37,
+    dinner:    0.23
+  };
+  const weights = slots.map(s => map[s] ?? 0.25);
+  // normalize in case of duplicates (e.g., two snacks)
+  const total = weights.reduce((a,b)=>a+b,0) || 1;
+  return weights.map(w => w / total);
+}
+
+// Slot-specific search query to bias Edamam results without touching backend
+function slotQueryFor(slot) {
+  switch (slot) {
+    case "breakfast": return "breakfast oatmeal eggs smoothie toast pancake yogurt";
+    case "snack":     return "snack smoothie bowl yogurt fruit nuts wrap energy bites";
+    case "lunch":     return "lunch salad bowl sandwich soup stir fry pasta wrap";
+    case "dinner":    return "dinner main entree curry roast pasta stew rice bowl";
+    default:          return "recipe";
+  }
+}
 
 // ------- helpers for macros -------
 function kcalPerServing(recipe) {
@@ -129,6 +162,19 @@ function renderTable(grid) {
     `).join("")
   }</tbody>`;
   return `<table>${thead}${tbody}</table>`;
+}
+
+// Build weekly plan from separate pools per slot
+function buildWeeklyPlanFromPools(pools) {
+  const mealsPerDay = pools.length;
+  const grid = Array.from({ length: mealsPerDay }, () => Array(7).fill(null));
+  for (let r = 0; r < mealsPerDay; r++) {
+    const pool = pools[r] || [];
+    for (let c = 0; c < 7; c++) {
+      grid[r][c] = pool.length ? pool[c % pool.length] : null;
+    }
+  }
+  return grid;
 }
 
 // ------- Phase 2: mobile card layout -------
@@ -275,19 +321,33 @@ document.addEventListener('click', (ev) => {
     pdfBtn?.classList.add('hidden');
 
     try {
-      const pool = await fetchPool({
-        q: "recipe",
-        perMealCalories: perMeal,
-        diet,
-        health,
-        cuisine: cuisine || "",
-        timeRange: timeRange || ""
-      });
-      if (!pool.length) {
-        setStatus("No recipes matched. Try a different 'Quick recipes' option or relax filters.");
+            // --- Slot-aware fetching ---
+      const slots = mealSlotsForCount(meals);
+      const weights = slotWeightsForSlots(slots);
+      const perSlotCalories = weights.map(w => Math.max(120, Math.round(dailyCalories * w)));
+
+      // Fetch one pool per slot, biasing the query with slot keywords
+      const pools = await Promise.all(slots.map((slot, i) => {
+        return fetchPool({
+          q: slotQueryFor(slot),
+          perMealCalories: perSlotCalories[i],
+          diet,
+          health,
+          cuisine: cuisine || "",
+          timeRange: timeRange || ""
+        }).catch(() => []);
+      }));
+
+      // If *every* pool is empty, bail early
+      const anyHits = pools.some(p => p && p.length);
+      if (!anyHits) {
+        setStatus("No recipes matched. Try changing 'Quick recipes' or relaxing filters.");
         return;
       }
-      const grid = buildWeeklyPlan(pool, meals);
+
+      // Build weekly grid using per-slot pools (Meal 1 = breakfast, etc.)
+      const grid = buildWeeklyPlanFromPools(pools);
+
 
       if (isMobile()) {
         // Mobile: day tabs + meal cards
