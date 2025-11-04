@@ -46,7 +46,7 @@ html,body{height:100%}
 /* Card container (slightly translucent so background shows) */
 .card{
   width:min(1100px,100%);
-  background:rgba(64,65,79,0.2);
+  background:rgba(64,65,79,0.1);
   border:1px solid var(--border);
   border-radius:8px;
   padding:18px;
