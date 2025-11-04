@@ -244,15 +244,16 @@ td:first-child{ font-weight:700}
   body {
     background-attachment: scroll !important;
     background-position: center top !important;
-    background-size: cover !important;
+    background-size: 100% auto !important;     /* full width */
+    background-repeat: repeat-y !important;    /* repeat vertically to fill long pages */
   }
 
   body::before {
-    background: rgba(0,0,0,0.3) !important; /* slightly darker for visibility */
+    background: rgba(0,0,0,0.34) !important; /* slightly darker overlay for readability */
   }
 
   .card {
-    background: rgba(64,65,79,0.45) !important; /* more image visibility */
+    background: rgba(64,65,79,0.45) !important;
     backdrop-filter: blur(6px) !important;
     -webkit-backdrop-filter: blur(6px) !important;
   }
@@ -261,12 +262,14 @@ td:first-child{ font-weight:700}
     padding: 16px 10px !important;
   }
 }
+
 /* =========== MOBILE BACKGROUND ALIGNMENT =========== */
 @media (max-width: 820px){
-  /* Move the focal point down and zoom in a little */
   body{
-    background-attachment: scroll !important;       /* iOS fix */
-    background-position: center 22% !important;     /* was center center */
-    background-size: 110% auto !important;          /* gentle zoom to avoid awkward edges */
+    background-attachment: scroll !important;
+    background-position: center 22% !important; /* Adjust focal point slightly down */
+    background-size: 105% auto !important;      /* gentle zoom */
+    background-repeat: repeat-y !important;     /* ensures full scroll coverage */
   }
 }
+
