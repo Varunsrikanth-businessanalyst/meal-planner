@@ -18,10 +18,6 @@
       </header>
 
       <form id="meal-form" class="form">
-      </form>
-      <!-- Phase 2: mobile UI containers -->
-      <div id="day-tabs" class="day-tabs" hidden></div>
-
         <!-- Row 1 -->
         <label class="field">
           <span>Age</span>
@@ -133,15 +129,19 @@
         </div>
       </form>
 
+      <!-- Phase 2: mobile UI containers -->
       <div id="day-tabs" class="day-tabs" hidden></div>
       <div id="mobile-results" class="mobile-results" hidden></div>
 
+      <!-- Desktop results table (unchanged) -->
       <div id="results" class="results"></div>
-      <div id="pdf-bar" class="pdf-bar no-print hidden">
-        <button id="download-pdf" class="btn" type="button" aria-label="Download PDF">Download PDF</button>
-      </div>
+      <!-- PDF action (shown after results render) -->
+<div id="pdf-bar" class="pdf-bar no-print hidden">
+  <button id="download-pdf" class="btn" type="button" aria-label="Download PDF">Download PDF</button>
+</div>
     </section>
   </main>
+
   <script src="./script.js?v=16"></script>
 </body>
 </html>
