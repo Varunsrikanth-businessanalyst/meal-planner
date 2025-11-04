@@ -15,7 +15,7 @@ body::before{
   position:fixed;
   inset:0;
   pointer-events:none;
-  background:rgba(0,0,0,0.35); /* 0.35 = lighter overlay for freshness */
+  background:rgba(0,0,0,0.20); /* 0.20 = lighter overlay for freshness */
   z-index:-1;
 }
 
