@@ -236,3 +236,31 @@ td:first-child{ font-weight:700}
   .chip__dot{ background:#666 }
   .pill{position:static; color:#000; border-color:#ccc}
 }
+/* ===================== */
+/*   MOBILE BACKGROUND   */
+/* ===================== */
+@media (max-width: 820px) {
+  body {
+    /* let the background move naturally (better performance on phones) */
+    background-attachment: scroll;
+    background-position: center top;
+    background-size: cover;
+  }
+
+  /* slightly stronger overlay for readability on small screens */
+  body::before {
+    background: rgba(0,0,0,0.4); /* darken just a bit for text contrast */
+  }
+
+  /* make the card slightly lighter so the image subtly shows */
+  .card {
+    background: rgba(64,65,79,0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  /* ensure padding adjusts to fit smaller screens */
+  .wrap {
+    padding: 16px 10px;
+  }
+}
