@@ -1,6 +1,6 @@
 /* ====== FULL PAGE BACKGROUND IMAGE ====== */
 body{
-  background-image: url("https://cupcakesandkalechips.com/wp-content/uploads/2023/09/Chocolate-Granola-Recipe-5.jpg");
+  background-image: url("https://png.pngtree.com/thumb_back/fw800/background/20241217/pngtree-a-colorful-salad-bowl-featuring-spinach-cherry-tomatoes-cucumbers-chickpeas-and-image_16817283.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -15,7 +15,7 @@ body::before{
   position:fixed;
   inset:0;
   pointer-events:none;
-  background:rgba(0,0,0,0.45); /* Adjust 0.45 → 0.35 for lighter look */
+  background:rgba(0,0,0,0.35); /* 0.35 = lighter overlay for freshness */
   z-index:-1;
 }
 
@@ -43,7 +43,7 @@ html,body{height:100%}
 
 .wrap{min-height:100%; display:grid; place-items:center; padding:28px 14px}
 
-/* ====== ONLY CHANGE FROM PREVIOUS: CARD SEMI-TRANSPARENT ====== */
+/* Card container (slightly translucent so background shows) */
 .card{
   width:min(1100px,100%);
   background:rgba(64,65,79,0.6);
