@@ -11,21 +11,37 @@
 <body>
   <main class="container">
     <!-- HERO -->
-    <section id="hero" class="hero">
-      <div class="hero-body">
-        <h1>Smart, delicious meal plans</h1>
-        <p>Balanced recipes matched to your calories, cuisine, and time.</p>
+   <section id="hero" class="hero">
+  <!-- Background image layer -->
+  <picture class="hero-bg">
+    <!-- Use your own files in /public/images or keep these Unsplash demos -->
+    <source media="(min-width:1200px)" srcset="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2000&auto=format&fit=crop" />
+    <source media="(min-width:800px)"  srcset="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1400&auto=format&fit=crop" />
+    <img
+      src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1200&auto=format&fit=crop"
+      alt=""
+      loading="eager"
+      decoding="async"
+    />
+  </picture>
 
-        <div class="pill-row">
-          <button class="pill" type="button">Balanced</button>
-          <button class="pill" type="button">Quick recipes</button>
-          <button class="pill" type="button">Personalized</button>
-        </div>
+  <!-- Foreground content -->
+  <div class="hero-body">
+    <h1>Smart, delicious meal plans</h1>
+    <p>Balanced recipes matched to your calories, cuisine, and time.</p>
 
-        <button id="ctaStart" class="cta" type="button">Start your plan</button>
-      </div>
-      <div class="calories-chip">Daily calories: <span id="caloriesOut">—</span></div>
-    </section>
+    <div class="pill-row">
+      <button class="pill" type="button">Balanced</button>
+      <button class="pill" type="button">Quick recipes</button>
+      <button class="pill" type="button">Personalized</button>
+    </div>
+
+    <button id="ctaStart" class="cta" type="button">Start your plan</button>
+  </div>
+
+  <div class="calories-chip">Daily calories: <span id="caloriesOut">—</span></div>
+</section>
+
 
     <!-- FORM -->
     <section id="generator" class="panel">
