@@ -1,6 +1,6 @@
 /* ====== FULL PAGE BACKGROUND IMAGE ====== */
 body{
-  background-image: url("https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=2400&auto=format&fit=crop");
+  background-image: url("https://cupcakesandkalechips.com/wp-content/uploads/2023/09/Chocolate-Granola-Recipe-5.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -15,7 +15,7 @@ body::before{
   position:fixed;
   inset:0;
   pointer-events:none;
-  background:rgba(0,0,0,0.45); /* Adjust 0.45 for darker/lighter overlay */
+  background:rgba(0,0,0,0.45); /* Adjust 0.45 → 0.35 for lighter look */
   z-index:-1;
 }
 
@@ -43,10 +43,10 @@ html,body{height:100%}
 
 .wrap{min-height:100%; display:grid; place-items:center; padding:28px 14px}
 
-/* ====== ONLY CHANGE: MAKE CARD SEMI-TRANSPARENT ====== */
+/* ====== ONLY CHANGE FROM PREVIOUS: CARD SEMI-TRANSPARENT ====== */
 .card{
   width:min(1100px,100%);
-  background:rgba(64,65,79,0.6); /* changed from solid gradient */
+  background:rgba(64,65,79,0.6);
   border:1px solid var(--border);
   border-radius:8px;
   padding:18px;
@@ -93,7 +93,7 @@ input:focus,select:focus{box-shadow:0 0 0 2px rgba(255,255,255,.06)}
 .status{color:#ffcccc; font-size:12px; display:none}
 .status.show{display:inline}
 
-/* --- Desktop table results (unchanged) --- */
+/* --- Desktop table results --- */
 .results{padding:8px 0 4px; overflow:auto}
 table{border-collapse:collapse; width:100%; min-width:920px}
 th,td{vertical-align:top; padding:10px; border-bottom:1px solid var(--border)}
