@@ -64,6 +64,7 @@ async function fetchPool(opts) {
   }
   return (data.hits || []).map(h => h.recipe);
 }
+
 // ------- slot logic (breakfast / snack / lunch / dinner) -------
 function mealSlotsForCount(meals) {
   if (meals === 3) return ["breakfast", "lunch", "dinner"];
@@ -82,20 +83,17 @@ function slotWeightsForSlots(slots) {
     dinner:    0.23
   };
   const weights = slots.map(s => map[s] ?? 0.25);
-  // normalize in case of duplicates (e.g., two snacks)
   const total = weights.reduce((a,b)=>a+b,0) || 1;
   return weights.map(w => w / total);
 }
 
-// Slot-specific search query to bias Edamam results without touching backend
+// Slot-specific search query (keep it to ONE keyword so Edamam doesn't AND-match everything)
 function slotQueryFor(slot) {
-  switch (slot) {
-    case "breakfast": return "breakfast oatmeal eggs smoothie toast pancake yogurt";
-    case "snack":     return "snack smoothie bowl yogurt fruit nuts wrap energy bites";
-    case "lunch":     return "lunch salad bowl sandwich soup stir fry pasta wrap";
-    case "dinner":    return "dinner main entree curry roast pasta stew rice bowl";
-    default:          return "recipe";
-  }
+  if (slot === "breakfast") return "breakfast";
+  if (slot === "snack")     return "snack";
+  if (slot === "lunch")     return "lunch";
+  if (slot === "dinner")    return "dinner";
+  return "recipe";
 }
 
 // ------- helpers for macros -------
@@ -261,20 +259,20 @@ document.addEventListener("DOMContentLoaded", () => {
   $('home-reset')?.addEventListener('click', resetAll);
 
   // Print handler (mobile-safe, works in most WebViews)
-document.addEventListener('click', (ev) => {
-  const btn = ev.target.closest('#download-pdf');
-  if (!btn) return;
-  ev.preventDefault();
-  btn.blur();
+  document.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('#download-pdf');
+    if (!btn) return;
+    ev.preventDefault();
+    btn.blur();
 
-  // iOS Safari requires the print to be inside the user-initiated handler
-  try { window.print(); } catch (_) {}
-
-  // Some webviews react a tick later
-  setTimeout(() => {
+    // iOS Safari requires the print to be inside the user-initiated handler
     try { window.print(); } catch (_) {}
-  }, 0);
-});
+
+    // Some webviews react a tick later
+    setTimeout(() => {
+      try { window.print(); } catch (_) {}
+    }, 0);
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -321,22 +319,30 @@ document.addEventListener('click', (ev) => {
     pdfBtn?.classList.add('hidden');
 
     try {
-            // --- Slot-aware fetching ---
+      // --- Slot-aware fetching with fallback ---
       const slots = mealSlotsForCount(meals);
       const weights = slotWeightsForSlots(slots);
       const perSlotCalories = weights.map(w => Math.max(120, Math.round(dailyCalories * w)));
 
-      // Fetch one pool per slot, biasing the query with slot keywords
-      const pools = await Promise.all(slots.map((slot, i) => {
-        return fetchPool({
-          q: slotQueryFor(slot),
+      const pools = [];
+      for (let i = 0; i < slots.length; i++) {
+        const slot = slots[i];
+        const baseOpts = {
           perMealCalories: perSlotCalories[i],
           diet,
           health,
           cuisine: cuisine || "",
           timeRange: timeRange || ""
-        }).catch(() => []);
-      }));
+        };
+
+        // First try the slot keyword
+        let pool = await fetchPool({ q: slotQueryFor(slot), ...baseOpts }).catch(() => []);
+        // Fallback to generic if empty
+        if (!pool.length) {
+          pool = await fetchPool({ q: "recipe", ...baseOpts }).catch(() => []);
+        }
+        pools.push(pool);
+      }
 
       // If *every* pool is empty, bail early
       const anyHits = pools.some(p => p && p.length);
@@ -348,16 +354,13 @@ document.addEventListener('click', (ev) => {
       // Build weekly grid using per-slot pools (Meal 1 = breakfast, etc.)
       const grid = buildWeeklyPlanFromPools(pools);
 
-
       if (isMobile()) {
         // Mobile: day tabs + meal cards
         resultsEl.hidden = true;
         renderMobile(grid, 0);
-
-        // IMPORTANT: also render a hidden desktop table for printing
+        // also render a hidden desktop table for printing
         resultsEl.innerHTML = renderTable(grid);
-
-        // show PDF button on mobile too
+        // show PDF button
         pdfBar?.classList.remove('hidden');
         pdfBtn?.classList.remove('hidden');
       } else {
@@ -376,8 +379,6 @@ document.addEventListener('click', (ev) => {
 
   // Re-render layout type on resize (optional nicety)
   window.addEventListener("resize", () => {
-    // No heavy rework here; next search will render into the new layout.
-    // This just toggles visibility if content exists.
     const hasMobile = $('mobile-results')?.innerHTML.trim().length > 0;
     const hasDesktop = $('results')?.innerHTML.trim().length > 0;
     if (isMobile() && hasMobile) {
