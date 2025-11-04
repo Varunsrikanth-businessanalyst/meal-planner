@@ -259,3 +259,21 @@ td:first-child{ font-weight:700}
   vertical-align: middle;
 }
 
+/* ===== Inline footer (below Generate Meal Plan) ===== */
+.footer-inline {
+  text-align: center;
+  margin-top: 8px;
+  padding-top: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  opacity: 0.9;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.footer-inline p {
+  margin: 0;
+}
+.footer-inline span {
+  font-size: 14px;
+  vertical-align: middle;
+}
