@@ -87,7 +87,7 @@ function slotWeightsForSlots(slots) {
   return weights.map(w => w / total);
 }
 
-// Slot-specific search query (keep it to ONE keyword so Edamam doesn't AND-match everything)
+// Slot-specific search query (single keyword so Edamam doesn't AND-match everything)
 function slotQueryFor(slot) {
   if (slot === "breakfast") return "breakfast";
   if (slot === "snack")     return "snack";
@@ -234,6 +234,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const pdfBtn = $('download-pdf');
   const pdfBar = $('pdf-bar');
 
+  // --- HERO background support (uses CSS var --hero-url) ---
+  const heroEl = document.querySelector('.hero');
+  if (heroEl) {
+    const bg = heroEl.getAttribute('data-bg') || './hero-salad.jpg';
+    heroEl.style.setProperty('--hero-url', `url("${bg}")`);
+  }
+
   const setStatus = (msg) => {
     if (!statusEl) return;
     if (!msg) { statusEl.textContent = ""; statusEl.classList.remove("show"); return; }
@@ -344,7 +351,6 @@ document.addEventListener("DOMContentLoaded", () => {
         pools.push(pool);
       }
 
-      // If *every* pool is empty, bail early
       const anyHits = pools.some(p => p && p.length);
       if (!anyHits) {
         setStatus("No recipes matched. Try changing 'Quick recipes' or relaxing filters.");
@@ -355,7 +361,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const grid = buildWeeklyPlanFromPools(pools);
 
       if (isMobile()) {
-        // Mobile: day tabs + meal cards
         resultsEl.hidden = true;
         renderMobile(grid, 0);
         // also render a hidden desktop table for printing
@@ -364,7 +369,6 @@ document.addEventListener("DOMContentLoaded", () => {
         pdfBar?.classList.remove('hidden');
         pdfBtn?.classList.remove('hidden');
       } else {
-        // Desktop: table
         dayTabsEl.hidden = true;
         mobResultsEl.hidden = true;
         resultsEl.hidden = false;
