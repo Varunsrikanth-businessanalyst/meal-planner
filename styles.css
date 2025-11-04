@@ -1,26 +1,21 @@
 /* ====== FULL PAGE BACKGROUND IMAGE ====== */
 body{
-  /* Background image */
   background-image: url("https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=2400&auto=format&fit=crop");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
-
-  /* Fallback color and font */
   margin:0;
   background-color:#343541;
   color:#ECECF1;
   font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
 }
-
-/* Overlay to darken the image slightly */
 body::before{
   content:"";
   position:fixed;
   inset:0;
   pointer-events:none;
-  background:rgba(0,0,0,0.55); /* change 0.55 → 0.4 for more photo */
+  background:rgba(0,0,0,0.45); /* Adjust 0.45 for darker/lighter overlay */
   z-index:-1;
 }
 
@@ -47,10 +42,16 @@ html,body{height:100%}
 [hidden]{display:none !important}
 
 .wrap{min-height:100%; display:grid; place-items:center; padding:28px 14px}
+
+/* ====== ONLY CHANGE: MAKE CARD SEMI-TRANSPARENT ====== */
 .card{
   width:min(1100px,100%);
-  background:linear-gradient(180deg,var(--panel) 0%, var(--panel-2) 100%);
-  border:1px solid var(--border); border-radius:8px; padding:18px;
+  background:rgba(64,65,79,0.6); /* changed from solid gradient */
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:18px;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
 }
 
 .card__header{
@@ -96,7 +97,7 @@ input:focus,select:focus{box-shadow:0 0 0 2px rgba(255,255,255,.06)}
 .results{padding:8px 0 4px; overflow:auto}
 table{border-collapse:collapse; width:100%; min-width:920px}
 th,td{vertical-align:top; padding:10px; border-bottom:1px solid var(--border)}
-th{ text-align:left; font-size:12px; color:#e4e5ea; position:sticky; top:0; background:var(--panel)}
+th{ text-align:left; font-size:12px; color:#e4e5ea; position:sticky; top:0; background:rgba(64,65,79,0.8)}
 td{ font-size:14px}
 td:first-child{ font-weight:700}
 .recipe{ width:100%; height:auto; border-radius:8px; border:1px solid var(--border); display:block; margin:8px 0 }
