@@ -7,18 +7,26 @@
 
   <!-- Screen styles -->
   <link href="./styles.css?v=8" rel="stylesheet" />
-  <!-- Print stylesheet already handled inside styles.css (@media print) -->
+  <!-- Print stylesheet handled inside styles.css (@media print) -->
 </head>
 
 <body>
   <main class="wrap">
     <section class="card">
       <header class="card__header">
-        <!-- Added fork icon next to title -->
+        <!-- Title with inline fork icon (no external requests) -->
         <button id="home-reset" class="title-link" type="button">
-          <img src="https://cdn-icons-png.flaticon.com/512/1046/1046784.png" 
-               alt="fork icon" 
-               style="width:22px; height:22px; vertical-align:middle; margin-right:8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+               xmlns="http://www.w3.org/2000/svg"
+               style="vertical-align:middle; margin-right:8px;">
+            <!-- Fork prongs -->
+            <path d="M7 2v6M9 2v6M11 2v6" stroke="#EAEAEA" stroke-width="2" stroke-linecap="round"/>
+            <path d="M7 8c0 2 2 3 2 5v7" stroke="#EAEAEA" stroke-width="2" stroke-linecap="round"/>
+            <!-- Handle cap -->
+            <circle cx="9" cy="20" r="1.6" fill="#EAEAEA"/>
+            <!-- Plate outline (subtle) -->
+            <path d="M14 7.5c4.2 0 7.5 3.3 7.5 7.5s-3.3 7.5-7.5 7.5" stroke="rgba(234,234,234,0.22)" stroke-width="2"/>
+          </svg>
           AI Meal Planner
         </button>
 
