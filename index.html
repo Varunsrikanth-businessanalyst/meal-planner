@@ -5,23 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AI Meal Planner</title>
 
-  <!-- Screen styles -->
-  <link href="./styles.css?v=9" rel="stylesheet" />
-  <!-- Print stylesheet already handled inside styles.css (@media print) -->
+  <link href="./styles.css?v=10" rel="stylesheet" />
 </head>
 <body>
   <main class="wrap">
     <section class="card">
       <header class="card__header">
-        <!-- Title group: title + salad icon (to the right) -->
+        <!-- Title + icon (icon on the RIGHT of title) -->
         <div class="app-title">
           <button id="home-reset" class="title-link" type="button">AI Meal Planner</button>
-          <span class="app-title__icon" aria-hidden="true">
-            <!-- clean, tiny salad-bowl SVG -->
+          <span class="app-title__icon" aria-hidden="true" title="Meals">
+            <!-- Clean fork icon -->
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" role="img" focusable="false">
-              <path d="M3 10a9 9 0 0 0 18 0H3Z" fill="#57CC99"/>
-              <path d="M5 10c0-2.5 2.5-4 4.5-4 .8 0 1.7.2 2.5.7C12.5 5.7 13.6 5 15 5c2 0 4 1.5 4 5" fill="#9BE3C9" opacity=".85"/>
-              <path d="M6 16h12" stroke="#2A2F3A" stroke-opacity=".35" stroke-linecap="round"/>
+              <path d="M6 3v7M9 3v7M12 3v7" stroke="#E7E9EE" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M9 10c0 1.7.3 2.5 1.2 3.4l.3.3c.6.6.9 1.4.9 2.2V21" stroke="#E7E9EE" stroke-width="1.6" stroke-linecap="round"/>
             </svg>
           </span>
         </div>
@@ -141,20 +138,20 @@
         </div>
       </form>
 
-      <!-- Phase 2: mobile UI containers -->
+      <!-- Mobile results containers -->
       <div id="day-tabs" class="day-tabs" hidden></div>
       <div id="mobile-results" class="mobile-results" hidden></div>
 
-      <!-- Desktop results table (unchanged) -->
+      <!-- Desktop results -->
       <div id="results" class="results"></div>
 
-      <!-- PDF action (shown after results render) -->
+      <!-- PDF action -->
       <div id="pdf-bar" class="pdf-bar no-print hidden">
         <button id="download-pdf" class="btn" type="button" aria-label="Download PDF">Download PDF</button>
       </div>
     </section>
 
-    <!-- Footer tagline under the card -->
+    <!-- Footer tagline with subtle separator line -->
     <footer class="app-footer no-print">
       Built by Varun <span class="heart" aria-hidden="true">❤</span>
       to eat smarter, plan faster and stay balanced
