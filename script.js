@@ -422,3 +422,78 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener('beforeprint', () => document.documentElement.classList.add('is-print'));
   window.addEventListener('afterprint', () => document.documentElement.classList.remove('is-print'));
 });
+
+// ========== iOS PDF support (APPENDED ONLY; no changes above) ==========
+document.addEventListener('DOMContentLoaded', () => {
+  const isIOS = () =>
+    /iPad|iPhone|iPod/i.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  // Ensure better print fidelity on WebKit (iOS)
+  const iosStyle = document.createElement('style');
+  iosStyle.textContent = `
+    @supports (-webkit-touch-callout: none) {
+      @media print {
+        * { -webkit-print-color-adjust: exact !important; }
+      }
+    }
+  `;
+  document.head.appendChild(iosStyle);
+
+  const btn = document.getElementById('download-pdf');
+  const resultsEl = document.getElementById('results');
+  const calChip = document.getElementById('cal-output');
+
+  if (btn && resultsEl) {
+    // Capture-phase handler so it runs before any bubbling document click handler
+    btn.addEventListener('click', function(ev) {
+      if (!isIOS()) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      // Build a clean printable window (fits page on iOS)
+      const printableHTML = `
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Meal Planner</title>
+<style>
+  @page { size: A4 landscape; margin: 10mm; }
+  html, body { background:#fff; color:#000; width:100%; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Arial, sans-serif; }
+  .wrap { max-width: 100%; margin: 0 auto; }
+  h1 { font-size:16px; margin: 6px 0 10px; }
+  .cal { font-size: 12px; margin: 2px 0 12px; }
+  table { width:100%; table-layout:fixed; border-collapse:collapse; }
+  th, td {
+    min-width:0; width:auto; padding:6px; font-size:11px; line-height:1.35;
+    word-wrap:break-word; overflow-wrap:anywhere; border:0;
+  }
+  img { max-width:100%; height:auto; max-height:140px; object-fit:cover; display:block; }
+  tr, td, img { page-break-inside: avoid; }
+  * { -webkit-print-color-adjust: exact; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>AI Meal Planner</h1>
+    <div class="cal">${calChip ? (calChip.textContent || "") : ""}</div>
+    ${resultsEl.innerHTML}
+  </div>
+  <script>try{ window.focus(); setTimeout(function(){ window.print(); }, 200); }catch(e){}<\/script>
+</body>
+</html>`;
+      const w = window.open('', '_blank');
+      if (w) {
+        w.document.open();
+        w.document.write(printableHTML);
+        w.document.close();
+      } else {
+        // Fallback to default print if popup blocked
+        try { window.print(); } catch (_) {}
+      }
+    }, true);
+  }
+});
