@@ -352,15 +352,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ✅ Add footer credit line
+   // ✅ Add footer credit line inside the card
+const card = document.querySelector(".card");
+if (card) {
   const footer = document.createElement("p");
   footer.innerHTML = `Built by <a href="https://varunthinksproduct.framer.website/" target="_blank" style="color:#7F8FFF;text-decoration:none;font-weight:600;">Varun</a> <span style="color:red;">❤️</span> where Product meets AI and smart eating begins.`;
   footer.style.textAlign = "center";
   footer.style.fontSize = "14px";
-  footer.style.marginTop = "18px";
-  footer.style.marginBottom = "12px";
+  footer.style.marginTop = "12px";
+  footer.style.paddingTop = "6px";
+  footer.style.borderTop = "1px solid rgba(255,255,255,0.08)";
   footer.style.color = "rgba(236,237,238,0.8)";
   footer.style.fontWeight = "500";
   footer.style.letterSpacing = "0.2px";
-  document.querySelector("main")?.appendChild(footer);
-});
+  footer.style.lineHeight = "1.6";
+  card.appendChild(footer);
+}
