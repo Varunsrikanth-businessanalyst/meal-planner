@@ -551,3 +551,36 @@ document.addEventListener('DOMContentLoaded', () => {
   style.textContent = css;
   document.head.appendChild(style);
 })();
+
+// ===== Ultra-condensed print (APPENDED ONLY) =====
+(function appendUltraCondensedPrint(){
+  const css = `
+    @media print {
+      /* Hide images and macro chips in print for compact length */
+      #results img.recipe, #results .meal-card__img { display: none !important; }
+      #results .macros { display: none !important; }
+
+      /* Limit ingredients to first 3 items per recipe */
+      #results ul li:nth-child(n+4) { display: none !important; }
+
+      /* Clamp long titles to 2 lines to prevent tall rows */
+      #results td > div[style*="font-weight:700"] a {
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+      }
+
+      /* Slightly tighter table to fit 1–2 pages */
+      #results th, #results td {
+        font-size: 10px !important;
+        padding: 3px !important;
+        line-height: 1.25 !important;
+      }
+    }
+  `;
+  const style = document.createElement('style');
+  style.id = 'print-ultra-condensed';
+  style.textContent = css;
+  document.head.appendChild(style);
+})();
