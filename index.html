@@ -6,14 +6,26 @@
   <title>AI Meal Planner</title>
 
   <!-- Screen styles -->
-  <link href="./styles.css?v=8" rel="stylesheet" />
+  <link href="./styles.css?v=9" rel="stylesheet" />
   <!-- Print stylesheet already handled inside styles.css (@media print) -->
 </head>
 <body>
   <main class="wrap">
     <section class="card">
       <header class="card__header">
-        <button id="home-reset" class="title-link" type="button">AI Meal Planner</button>
+        <!-- Title group: title + salad icon (to the right) -->
+        <div class="app-title">
+          <button id="home-reset" class="title-link" type="button">AI Meal Planner</button>
+          <span class="app-title__icon" aria-hidden="true">
+            <!-- clean, tiny salad-bowl SVG -->
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" role="img" focusable="false">
+              <path d="M3 10a9 9 0 0 0 18 0H3Z" fill="#57CC99"/>
+              <path d="M5 10c0-2.5 2.5-4 4.5-4 .8 0 1.7.2 2.5.7C12.5 5.7 13.6 5 15 5c2 0 4 1.5 4 5" fill="#9BE3C9" opacity=".85"/>
+              <path d="M6 16h12" stroke="#2A2F3A" stroke-opacity=".35" stroke-linecap="round"/>
+            </svg>
+          </span>
+        </div>
+
         <span id="cal-output" class="pill">Daily calories: —</span>
       </header>
 
@@ -135,11 +147,18 @@
 
       <!-- Desktop results table (unchanged) -->
       <div id="results" class="results"></div>
+
       <!-- PDF action (shown after results render) -->
-<div id="pdf-bar" class="pdf-bar no-print hidden">
-  <button id="download-pdf" class="btn" type="button" aria-label="Download PDF">Download PDF</button>
-</div>
+      <div id="pdf-bar" class="pdf-bar no-print hidden">
+        <button id="download-pdf" class="btn" type="button" aria-label="Download PDF">Download PDF</button>
+      </div>
     </section>
+
+    <!-- Footer tagline under the card -->
+    <footer class="app-footer no-print">
+      Built by Varun <span class="heart" aria-hidden="true">❤</span>
+      to eat smarter, plan faster and stay balanced
+    </footer>
   </main>
 
   <script src="./script.js?v=16"></script>
