@@ -4,22 +4,16 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AI Meal Planner</title>
-  <link href="./styles.css?v=11" rel="stylesheet" />
+
+  <!-- Screen styles -->
+  <link href="./styles.css?v=8" rel="stylesheet" />
+  <!-- Print stylesheet already handled inside styles.css (@media print) -->
 </head>
 <body>
   <main class="wrap">
     <section class="card">
       <header class="card__header">
-        <div class="app-title">
-          <button id="home-reset" class="title-link" type="button">AI Meal Planner</button>
-          <span class="app-title__icon" aria-hidden="true" title="Meals">
-            <!-- Fork icon -->
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" role="img" focusable="false">
-              <path d="M6 3v7M9 3v7M12 3v7" stroke="#E7E9EE" stroke-width="1.6" stroke-linecap="round"/>
-              <path d="M9 10c0 1.7.3 2.5 1.2 3.4l.3.3c.6.6.9 1.4.9 2.2V21" stroke="#E7E9EE" stroke-width="1.6" stroke-linecap="round"/>
-            </svg>
-          </span>
-        </div>
+        <button id="home-reset" class="title-link" type="button">AI Meal Planner</button>
         <span id="cal-output" class="pill">Daily calories: —</span>
       </header>
 
@@ -67,12 +61,23 @@
             <option value="">Any</option>
             <option value="american">American</option>
             <option value="asian">Asian</option>
+            <option value="british">British</option>
+            <option value="caribbean">Caribbean</option>
+            <option value="central europe">Central Europe</option>
+            <option value="chinese">Chinese</option>
+            <option value="eastern europe">Eastern Europe</option>
+            <option value="french">French</option>
             <option value="indian">Indian</option>
             <option value="italian">Italian</option>
-            <option value="mexican">Mexican</option>
             <option value="japanese">Japanese</option>
-            <option value="french">French</option>
+            <option value="kosher">Kosher</option>
             <option value="mediterranean">Mediterranean</option>
+            <option value="mexican">Mexican</option>
+            <option value="middle eastern">Middle Eastern</option>
+            <option value="nordic">Nordic</option>
+            <option value="south american">South American</option>
+            <option value="south east asian">South East Asian</option>
+            <option value="world">World</option>
           </select>
         </label>
 
@@ -102,6 +107,8 @@
             <option value="vegan">Vegan</option>
             <option value="vegetarian">Vegetarian</option>
             <option value="non-vegetarian" selected>Non-vegetarian</option>
+            <option value="alcohol-free">Alcohol-free</option>
+            <option value="peanut-free">Peanut-free</option>
           </select>
         </label>
 
@@ -120,25 +127,18 @@
           <button type="submit" class="btn">Generate Meal Plan</button>
           <span id="status" class="status" role="status" aria-live="polite"></span>
         </div>
-
-        <!-- Inline footer tagline inside the card -->
-        <div class="form-footer-note">
-          Built by Varun <span class="heart" aria-hidden="true">❤</span>
-          to eat smarter, plan faster and stay balanced
-        </div>
       </form>
 
-      <!-- Mobile results containers -->
+      <!-- Phase 2: mobile UI containers -->
       <div id="day-tabs" class="day-tabs" hidden></div>
       <div id="mobile-results" class="mobile-results" hidden></div>
 
-      <!-- Desktop results -->
+      <!-- Desktop results table (unchanged) -->
       <div id="results" class="results"></div>
-
-      <!-- PDF action -->
-      <div id="pdf-bar" class="pdf-bar no-print hidden">
-        <button id="download-pdf" class="btn" type="button" aria-label="Download PDF">Download PDF</button>
-      </div>
+      <!-- PDF action (shown after results render) -->
+<div id="pdf-bar" class="pdf-bar no-print hidden">
+  <button id="download-pdf" class="btn" type="button" aria-label="Download PDF">Download PDF</button>
+</div>
     </section>
   </main>
 
