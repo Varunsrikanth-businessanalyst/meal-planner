@@ -72,12 +72,7 @@ function mealSlotsForCount(meals) {
 
 // Calorie weights per slot (sums ≈ 1.0)
 function slotWeightsForSlots(slots) {
-  const map = {
-    breakfast: 0.30,
-    snack:     0.10,
-    lunch:     0.37,
-    dinner:    0.23
-  };
+  const map = { breakfast: 0.30, snack: 0.10, lunch: 0.37, dinner: 0.23 };
   const weights = slots.map(s => map[s] ?? 0.25);
   const total = weights.reduce((a,b)=>a+b,0) || 1;
   return weights.map(w => w / total);
@@ -352,7 +347,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ✅ Footer credit INSIDE the card (centered)
+  // ✅ Add footer credit line INSIDE the card
   const card = document.querySelector(".card");
   if (card) {
     const footer = document.createElement("p");
@@ -367,15 +362,42 @@ document.addEventListener("DOMContentLoaded", () => {
     footer.style.letterSpacing = "0.2px";
     footer.style.lineHeight = "1.6";
     card.appendChild(footer);
-
-    // ✅ LinkedIn note OUTSIDE the card, bottom-right (after the card)
-    const dm = document.createElement("p");
-    dm.innerHTML = `Got feedback or ideas? <a href="https://www.linkedin.com/in/varun-srikanth/" target="_blank" rel="noopener" style="color:#7F8FFF;text-decoration:none;font-weight:600;">DM me on LinkedIn</a>.`;
-    dm.style.margin = "8px 4px 0";
-    dm.style.textAlign = "right";
-    dm.style.fontSize = "13px";
-    dm.style.color = "rgba(236,237,238,0.82)";
-    dm.style.letterSpacing = "0.2px";
-    card.insertAdjacentElement("afterend", dm);
   }
+
+  // ✅ Inject minimal PRINT CSS from JS to prevent right-edge clipping in PDFs
+  (function injectPrintFixes(){
+    const css = `
+      @page { size: A4 landscape; margin: 10mm; }
+      @media print {
+        html,body{background:#fff !important;color:#000 !important}
+        .wrap{padding:0 !important}
+        .card{box-shadow:none !important;background:#fff !important;border:none !important}
+        #day-tabs,#mobile-results,.form,.actions,.title-link,.no-print{display:none !important}
+        #results{overflow:visible !important}
+
+        #results table{width:100% !important; table-layout:fixed !important}
+        #results th,#results td{
+          min-width:0 !important; width:auto !important;
+          word-wrap:break-word !important; overflow-wrap:anywhere !important;
+          font-size:11px !important; color:#000 !important;
+        }
+        #results th{position:static !important; top:auto !important; background:#fff !important}
+
+        img.recipe{max-width:100% !important; height:auto !important; max-height:140px !important; object-fit:cover !important}
+        tr, td, img.recipe{page-break-inside:avoid !important}
+      }
+    `;
+    const style = document.createElement('style');
+    style.id = 'print-fixes';
+    style.textContent = css;
+    document.head.appendChild(style);
+  })();
+
+  // Optional: hooks if we ever need JS toggles around print
+  window.addEventListener('beforeprint', () => {
+    document.documentElement.classList.add('is-print');
+  });
+  window.addEventListener('afterprint', () => {
+    document.documentElement.classList.remove('is-print');
+  });
 });
