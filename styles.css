@@ -190,48 +190,30 @@ td:first-child{ font-weight:700}
 }
 .meal-card__link{color:#fff; text-decoration:none}
 .meal-card__meta{font-size:12px; color:#e5e7eb}
-
 .meal-card__img{
   width:100%; aspect-ratio:4/3; object-fit:cover;
   display:block; border-radius:10px; border:1px solid var(--border); margin:6px 0 8px;
 }
-
 .meal-card ul{margin:6px 0 0 18px; padding:0}
 .meal-card li{margin:2px 0}
 
 /* ============================= */
 /*     PRINT — UPDATED BLOCK     */
 /* ============================= */
-
-@page {
-  size: A4 landscape;
-  margin: 10mm;
-}
+@page { size: A4 landscape; margin: 10mm; }
 
 @media print{
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-
   html, body { height:auto; background:#fff !important; color:#000 !important; }
   .wrap{ display:block; padding:0 }
-  .card{
-    border:none; width:auto;
-    background:#fff !important;
-  }
-
+  .card{ border:none; width:auto; background:#fff !important; }
   .form, .day-tabs, .mobile-results, .actions, .title-link, .no-print { display:none !important }
   .results{ display:block !important; overflow:visible !important }
-
   table{ min-width:0 !important; width:100% !important; table-layout:auto; }
   th, td { font-size:11px; color:#000 !important; }
-  th{
-    position: static !important;
-    top: auto !important;
-    background:#fff !important;
-  }
-
+  th{ position: static !important; top: auto !important; background:#fff !important; }
   tr, td, img.recipe { page-break-inside: avoid; }
   tbody { page-break-inside: auto; }
-
   .chip{ border-color:#999 }
   .chip__dot{ background:#666 }
   .pill{position:static; color:#000; border-color:#ccc}
@@ -245,31 +227,44 @@ td:first-child{ font-weight:700}
     background-attachment: scroll !important;
     background-position: center top !important;
     background-size: 100% auto !important;     /* full width */
-    background-repeat: repeat-y !important;    /* repeat vertically to fill long pages */
+    background-repeat: repeat-y !important;    /* fill long pages */
   }
-
-  body::before {
-    background: rgba(0,0,0,0.34) !important; /* slightly darker overlay for readability */
-  }
-
+  body::before { background: rgba(0,0,0,0.34) !important; }
   .card {
     background: rgba(64,65,79,0.45) !important;
     backdrop-filter: blur(6px) !important;
     -webkit-backdrop-filter: blur(6px) !important;
   }
-
-  .wrap {
-    padding: 16px 10px !important;
-  }
+  .wrap { padding: 16px 10px !important; }
 }
 
 /* =========== MOBILE BACKGROUND ALIGNMENT =========== */
 @media (max-width: 820px){
   body{
     background-attachment: scroll !important;
-    background-position: center 22% !important; /* Adjust focal point slightly down */
+    background-position: center 22% !important; /* nudge focal */
     background-size: 105% auto !important;      /* gentle zoom */
-    background-repeat: repeat-y !important;     /* ensures full scroll coverage */
+    background-repeat: repeat-y !important;
   }
 }
 
+/* ====== Tiny additions for branding (header + footer) ====== */
+.app-title{display:flex; align-items:center; gap:8px}
+.app-title__icon{display:inline-flex; translate:0 1px}
+
+.app-footer{
+  text-align:center;
+  color:var(--muted);
+  font-size:13.5px;
+  margin-top:14px;
+  letter-spacing:.2px;
+}
+.app-footer .heart{
+  color:#ff4b5c; /* bright red heart */
+  margin:0 4px;
+  font-size:14px;
+  vertical-align:-1px;
+}
+@media (max-width:820px){
+  .app-footer{font-size:13px; margin-top:12px}
+}
