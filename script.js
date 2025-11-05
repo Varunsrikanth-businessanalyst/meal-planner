@@ -508,3 +508,46 @@ document.addEventListener('DOMContentLoaded', () => {
   style.textContent = css;
   document.head.appendChild(style);
 })();
+// ===== Hard-fit print patch (APPENDED ONLY) =====
+(function appendHardFitPrint(){
+  const css = `
+    @media print {
+      /* 1) Nuke inline min-width from cells explicitly */
+      #results td[style*="min-width"], #results th[style*="min-width"] {
+        min-width: 0 !important;
+      }
+
+      /* 2) Last-resort scale to guarantee fit across engines */
+      html.is-print #results {
+        transform: scale(0.86) !important;
+        transform-origin: top left !important;
+        width: calc(100% / 0.86) !important; /* counter-scale width so content remains readable */
+      }
+
+      /* 3) WebKit/iOS explicit transform */
+      @supports (-webkit-touch-callout: none) {
+        html.is-print #results {
+          -webkit-transform: scale(0.86) !important;
+          -webkit-transform-origin: top left !important;
+          width: calc(100% / 0.86) !important;
+        }
+      }
+
+      /* 4) Slightly tighter type + padding to help 8 columns */
+      #results th, #results td {
+        font-size: 10px !important;
+        padding: 4px !important;
+        line-height: 1.3 !important;
+      }
+
+      /* 5) Keep images from forcing column growth */
+      #results img.recipe, #results .meal-card__img {
+        max-height: 120px !important;
+      }
+    }
+  `;
+  const style = document.createElement('style');
+  style.id = 'print-hardfit';
+  style.textContent = css;
+  document.head.appendChild(style);
+})();
