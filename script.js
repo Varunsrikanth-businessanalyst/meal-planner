@@ -378,4 +378,47 @@ document.addEventListener("DOMContentLoaded", () => {
     dm.style.letterSpacing = "0.2px";
     card.insertAdjacentElement("afterend", dm);
   }
+
+  // ---------- PRINT PDF fit fixes (APPENDED only; nothing above changed) ----------
+  (function injectPrintFixes(){
+    const css = `
+      @page { size: A4 landscape; margin: 10mm; }
+      @media print {
+        html, body { background: #fff !important; width: 100% !important; overflow: visible !important; }
+        /* Remove shadows/background effects to avoid widening the layout */
+        .card { box-shadow: none !important; backdrop-filter: none !important; background: #fff !important; }
+
+        /* Hide interactive chrome in print */
+        #day-tabs, #mobile-results, #pdf-bar, #download-pdf { display: none !important; }
+
+        /* Fit weekly grid to page width */
+        #results { overflow: visible !important; }
+        #results table { width: 100% !important; table-layout: fixed !important; border-collapse: collapse !important; }
+
+        /* Critical: allow columns to shrink & wrap so the right edge isn't cut */
+        #results th, #results td {
+          min-width: 0 !important; width: auto !important;
+          word-wrap: break-word !important; overflow-wrap: anywhere !important;
+          padding: 6px !important; font-size: 11px !important; line-height: 1.35 !important; color: #000 !important;
+        }
+
+        /* Keep header visible, no sticky positioning in print */
+        #results th { position: static !important; background: #fff !important; }
+
+        /* Images scale inside cells */
+        img.recipe, .meal-card__img { max-width: 100% !important; height: auto !important; max-height: 140px !important; object-fit: cover !important; }
+
+        /* Avoid mid-row breaks */
+        tr, td, img.recipe { page-break-inside: avoid !important; }
+      }
+    `;
+    const style = document.createElement("style");
+    style.id = "print-fixes";
+    style.textContent = css;
+    document.head.appendChild(style);
+  })();
+
+  // Optional hooks (no visual change, just future-proof)
+  window.addEventListener('beforeprint', () => document.documentElement.classList.add('is-print'));
+  window.addEventListener('afterprint', () => document.documentElement.classList.remove('is-print'));
 });
