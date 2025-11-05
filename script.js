@@ -497,3 +497,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }, true);
   }
 });
+
+// ======== Letter + Landscape print override (APPENDED ONLY) ========
+(function injectLetterLandscapeOverride(){
+  const css = `
+    @page { size: Letter landscape; margin: 10mm; }
+  `;
+  const style = document.createElement('style');
+  style.id = 'print-fixes-override-letter';
+  style.textContent = css;
+  document.head.appendChild(style);
+})();
