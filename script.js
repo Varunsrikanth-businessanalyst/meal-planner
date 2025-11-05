@@ -352,7 +352,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ✅ Add footer credit line INSIDE the card
+  // ✅ Footer credit INSIDE the card (centered)
   const card = document.querySelector(".card");
   if (card) {
     const footer = document.createElement("p");
@@ -367,5 +367,15 @@ document.addEventListener("DOMContentLoaded", () => {
     footer.style.letterSpacing = "0.2px";
     footer.style.lineHeight = "1.6";
     card.appendChild(footer);
+
+    // ✅ LinkedIn note OUTSIDE the card, bottom-right (after the card)
+    const dm = document.createElement("p");
+    dm.innerHTML = `Got feedback or ideas? <a href="https://www.linkedin.com/in/varun-srikanth/" target="_blank" rel="noopener" style="color:#7F8FFF;text-decoration:none;font-weight:600;">DM me on LinkedIn</a>.`;
+    dm.style.margin = "8px 4px 0";
+    dm.style.textAlign = "right";
+    dm.style.fontSize = "13px";
+    dm.style.color = "rgba(236,237,238,0.82)";
+    dm.style.letterSpacing = "0.2px";
+    card.insertAdjacentElement("afterend", dm);
   }
 });
