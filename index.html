@@ -9,11 +9,19 @@
   <link href="./styles.css?v=8" rel="stylesheet" />
   <!-- Print stylesheet already handled inside styles.css (@media print) -->
 </head>
+
 <body>
   <main class="wrap">
     <section class="card">
       <header class="card__header">
-        <button id="home-reset" class="title-link" type="button">AI Meal Planner</button>
+        <!-- Added fork icon next to title -->
+        <button id="home-reset" class="title-link" type="button">
+          <img src="https://cdn-icons-png.flaticon.com/512/1046/1046784.png" 
+               alt="fork icon" 
+               style="width:22px; height:22px; vertical-align:middle; margin-right:8px;">
+          AI Meal Planner
+        </button>
+
         <span id="cal-output" class="pill">Daily calories: —</span>
       </header>
 
@@ -133,12 +141,13 @@
       <div id="day-tabs" class="day-tabs" hidden></div>
       <div id="mobile-results" class="mobile-results" hidden></div>
 
-      <!-- Desktop results table (unchanged) -->
+      <!-- Desktop results table -->
       <div id="results" class="results"></div>
+
       <!-- PDF action (shown after results render) -->
-<div id="pdf-bar" class="pdf-bar no-print hidden">
-  <button id="download-pdf" class="btn" type="button" aria-label="Download PDF">Download PDF</button>
-</div>
+      <div id="pdf-bar" class="pdf-bar no-print hidden">
+        <button id="download-pdf" class="btn" type="button" aria-label="Download PDF">Download PDF</button>
+      </div>
     </section>
   </main>
 
