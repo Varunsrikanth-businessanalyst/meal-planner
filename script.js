@@ -352,7 +352,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ✅ Add footer credit line INSIDE the card
+  // ✅ Footer credit INSIDE the card
   const card = document.querySelector(".card");
   if (card) {
     const footer = document.createElement("p");
@@ -367,5 +367,19 @@ document.addEventListener("DOMContentLoaded", () => {
     footer.style.letterSpacing = "0.2px";
     footer.style.lineHeight = "1.6";
     card.appendChild(footer);
+  }
+
+  // ✅ “DM me on LinkedIn” note right under the button (empty state area)
+  const actionsRow = document.querySelector(".actions.field--span2");
+  if (actionsRow && actionsRow.parentElement) {
+    const note = document.createElement("p");
+    note.innerHTML = `Got feedback or ideas? <a href="https://www.linkedin.com/in/varunsrikanth" target="_blank" rel="noopener" style="color:#7F8FFF;text-decoration:none;font-weight:600;">DM me on LinkedIn</a>.`;
+    note.style.margin = "6px 0 0";
+    note.style.textAlign = "right";
+    note.style.fontSize = "13px";
+    note.style.color = "rgba(236,237,238,0.82)";
+    note.style.letterSpacing = "0.2px";
+    // insert right after the .actions row
+    actionsRow.insertAdjacentElement("afterend", note);
   }
 });
