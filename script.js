@@ -237,15 +237,38 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   $('home-reset')?.addEventListener('click', resetAll);
 
-  // Print handler
+  // EXISTING general click → print
   document.addEventListener('click', (ev) => {
     const btn = ev.target.closest('#download-pdf');
     if (!btn) return;
     ev.preventDefault();
     btn.blur();
+    // Ensure desktop table is visible before printing
+    const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
+    if (res) res.hidden = false;
+    if (mob) mob.hidden = true;
+    if (tabs) tabs.hidden = true;
     try { window.print(); } catch (_) {}
     setTimeout(() => { try { window.print(); } catch (_) {} }, 0);
   });
+
+  // ✅ ADD-ONLY: make the button responsive on iPhone (touchend/pointerup)
+  if (pdfBtn) {
+    const ensureDesktopView = () => {
+      const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
+      if (res) res.hidden = false;
+      if (mob) mob.hidden = true;
+      if (tabs) tabs.hidden = true;
+    };
+    const triggerPrint = (e) => {
+      if (e) e.preventDefault();
+      ensureDesktopView();
+      try { window.print(); } catch (_) {}
+    };
+    pdfBtn.addEventListener('touchend', triggerPrint, { passive: false });
+    pdfBtn.addEventListener('pointerup', triggerPrint);
+    pdfBtn.addEventListener('click', triggerPrint);
+  }
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -418,7 +441,25 @@ document.addEventListener("DOMContentLoaded", () => {
     document.head.appendChild(style);
   })();
 
-  // Optional hooks (no visual change, just future-proof)
-  window.addEventListener('beforeprint', () => document.documentElement.classList.add('is-print'));
-  window.addEventListener('afterprint', () => document.documentElement.classList.remove('is-print'));
+  // Optional hooks (keep simple, add-only): ensure proper view + eager images
+  window.addEventListener('beforeprint', () => {
+    document.documentElement.classList.add('is-print');
+    const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
+    if (res) res.hidden = false;
+    if (mob) mob.hidden = true;
+    if (tabs) tabs.hidden = true;
+    document.querySelectorAll('#results img[loading="lazy"]').forEach(img => {
+      try { img.loading = 'eager'; img.decoding = 'sync'; } catch (_) {}
+    });
+  });
+
+  window.addEventListener('afterprint', () => {
+    document.documentElement.classList.remove('is-print');
+    if (isMobile()) {
+      const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
+      if (res)  res.hidden  = true;
+      if (mob)  mob.hidden  = false;
+      if (tabs) tabs.hidden = false;
+    }
+  });
 });
