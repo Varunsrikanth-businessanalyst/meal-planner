@@ -347,6 +347,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const grid = buildWeeklyPlanFromPools(pools);
+      // ADD-ONLY: keep a copy for print layouts (mobile day-per-page)
+      window.__mealGrid = grid;
 
       if (isMobile()) {
         resultsEl.hidden = true;
@@ -408,6 +410,54 @@ document.addEventListener("DOMContentLoaded", () => {
     dm.style.letterSpacing = "0.2px";
     card.insertAdjacentElement("afterend", dm);
   }
+  
+// ========== ADD-ONLY: Build portrait "one day per page" stack for phones ==========
+function buildPhonePrintStackHTML(grid) {
+  if (!grid || !grid.length) return "";
+
+  const mealCount = grid.length;
+  const dayPages = WEEKDAYS.map((day, colIdx) => {
+    const mealCards = [];
+    for (let r = 0; r < mealCount; r++) {
+      const rec = grid[r]?.[colIdx];
+      if (!rec) continue;
+
+      const kcal = `${Math.round((rec.calories || 0) / Math.max(1, rec.yield || 1))}`;
+      const mins = Number.isFinite(rec.totalTime) ? ` • ${rec.totalTime} min` : "";
+
+      mealCards.push(`
+        <article class="print-card">
+          <img class="print-card__img" src="${rec.image}" alt="${rec.label}" />
+          <div class="print-card__title">${rec.label}</div>
+          <div class="print-card__meta">~${kcal} kcal${mins}</div>
+          <div class="print-card__macros">
+            <span class="chip"><span class="chip__dot"></span>Carbs: ${Math.round((rec.totalNutrients?.CHOCDF?.quantity || 0)/Math.max(1, rec.yield||1))}g</span>
+            <span class="chip"><span class="chip__dot"></span>Protein: ${Math.round((rec.totalNutrients?.PROCNT?.quantity || 0)/Math.max(1, rec.yield||1))}g</span>
+            <span class="chip"><span class="chip__dot"></span>Fat: ${Math.round((rec.totalNutrients?.FAT?.quantity || 0)/Math.max(1, rec.yield||1))}g</span>
+            <span class="chip"><span class="chip__dot"></span>Fiber: ${Math.round((rec.totalNutrients?.FIBTG?.quantity || 0)/Math.max(1, rec.yield||1))}g</span>
+            <span class="chip"><span class="chip__dot"></span>Sugar: ${Math.round((rec.totalNutrients?.SUGAR?.quantity || 0)/Math.max(1, rec.yield||1))}g</span>
+          </div>
+        </article>
+      `);
+    }
+
+    return `
+      <section class="print-day">
+        <h2 class="print-day__heading">${day}</h2>
+        ${mealCards.join("")}
+      </section>
+    `;
+  });
+
+  const footer = `
+    <footer class="print-footer">
+      Built by Varun ❤️ where Product meets AI and smart eating begins. 
+      <span class="print-footer__dm">Got feedback or ideas? DM me on LinkedIn.</span>
+    </footer>
+  `;
+
+  return `<div id="print-stack">${dayPages.join("")}${footer}</div>`;
+}
 
  // ---------- PRINT PDF fit fixes (APPENDED only; nothing above changed) ----------
 (function injectPrintFixes(){
@@ -460,16 +510,20 @@ document.addEventListener("DOMContentLoaded", () => {
 })();
 
   // Optional hooks (keep simple, add-only): ensure proper view + eager images
-  window.addEventListener('beforeprint', () => {
-    document.documentElement.classList.add('is-print');
-    const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
-    if (res) res.hidden = false;
-    if (mob) mob.hidden = true;
-    if (tabs) tabs.hidden = true;
-    document.querySelectorAll('#results img[loading="lazy"]').forEach(img => {
-      try { img.loading = 'eager'; img.decoding = 'sync'; } catch (_) {}
-    });
+window.addEventListener('beforeprint', () => {
+  document.documentElement.classList.add('is-print');
+
+  // ⬇️ ADD THIS LINE so mobile doesn't flip the desktop table back on
+  if (isMobile()) return;
+
+  const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
+  if (res) res.hidden = false;
+  if (mob) mob.hidden = true;
+  if (tabs) tabs.hidden = true;
+  document.querySelectorAll('#results img[loading="lazy"]').forEach(img => {
+    try { img.loading = 'eager'; img.decoding = 'sync'; } catch (_) {}
   });
+});
 
   window.addEventListener('afterprint', () => {
     document.documentElement.classList.remove('is-print');
@@ -481,3 +535,45 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+// ========== ADD-ONLY: Mobile "day-per-page" swap on print ==========
+window.addEventListener('beforeprint', () => {
+  if (!isMobile() || !window.__mealGrid) return;
+
+  // NEW: mark mobile-print mode so CSS can switch to portrait
+  document.documentElement.classList.add('is-print-mobile');
+
+  const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
+  if (res)  res.hidden  = true;
+  if (mob)  mob.hidden  = true;
+  if (tabs) tabs.hidden = true;
+
+  let stack = document.getElementById('print-stack');
+  const html = buildPhonePrintStackHTML(window.__mealGrid);
+  if (stack) {
+    stack.outerHTML = html; // refresh content
+  } else {
+    document.body.insertAdjacentHTML('beforeend', html);
+  }
+
+  // NEW: ensure all print images render crisply on iPhone/Chrome
+  document.querySelectorAll('#print-stack img').forEach(img => {
+    try { img.loading = 'eager'; img.decoding = 'sync'; } catch (_) {}
+  });
+});
+
+window.addEventListener('afterprint', () => {
+  if (!isMobile()) return;
+
+  // NEW: remove mobile-print class
+  document.documentElement.classList.remove('is-print-mobile');
+
+  const stack = document.getElementById('print-stack');
+  if (stack) stack.remove();
+
+  const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
+  if (res)  res.hidden  = true;
+  if (mob)  mob.hidden  = false;
+  if (tabs) tabs.hidden = false;
+});
+
