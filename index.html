@@ -8,7 +8,12 @@
   <!-- Screen styles -->
   <link href="./styles.css?v=8" rel="stylesheet" />
   <!-- Print stylesheet already handled inside styles.css (@media print) -->
+
+  <!-- NEW: libs for iOS PDF generation -->
+  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
+
 <body>
   <main class="wrap">
     <section class="card">
@@ -18,102 +23,57 @@
       </header>
 
       <form id="meal-form" class="form">
-        <!-- Row 1 -->
-        <label class="field">
-          <span>Age</span>
-          <input id="age" type="number" min="12" max="90" placeholder="24" required />
-        </label>
-
-        <label class="field">
-          <span>Weight (kg)</span>
-          <input id="weight" type="number" min="40" max="200" placeholder="70" required />
-        </label>
-
-        <!-- Row 2 -->
-        <label class="field">
-          <span>Height (cm)</span>
-          <input id="height" type="number" min="120" max="230" placeholder="175" required />
-        </label>
-
-        <label class="field">
-          <span>Gender</span>
-          <select id="gender" required>
-            <option value="male" selected>Male</option>
+        <label>Gender
+          <select id="gender">
+            <option value="male">Male</option>
             <option value="female">Female</option>
           </select>
         </label>
 
-        <!-- Row 3 -->
-        <label class="field">
-          <span>Activity Level</span>
-          <select id="activityLevel" required>
-            <option value="1.2">Sedentary (little or no exercise)</option>
-            <option value="1.375">Lightly active (1–3 days/week)</option>
-            <option value="1.55">Moderately active (3–5 days/week)</option>
-            <option value="1.725">Very active (6–7 days/week)</option>
-            <option value="1.9">Extra active (physical job or 2× training)</option>
+        <label>Age <input id="age" type="number" placeholder="Years" min="1" required /></label>
+        <label>Height <input id="height" type="number" placeholder="cm" min="1" required /></label>
+        <label>Weight <input id="weight" type="number" placeholder="kg" min="1" required /></label>
+
+        <label>Activity
+          <select id="activity">
+            <option value="1.2">Sedentary</option>
+            <option value="1.375">Lightly Active</option>
+            <option value="1.55" selected>Moderately Active</option>
+            <option value="1.725">Very Active</option>
           </select>
         </label>
 
-        <label class="field">
-          <span>Cuisine</span>
-          <select id="cuisine">
-            <option value="">Any</option>
-            <option value="american">American</option>
-            <option value="asian">Asian</option>
-            <option value="british">British</option>
-            <option value="caribbean">Caribbean</option>
-            <option value="central europe">Central Europe</option>
-            <option value="chinese">Chinese</option>
-            <option value="eastern europe">Eastern Europe</option>
-            <option value="french">French</option>
-            <option value="indian">Indian</option>
-            <option value="italian">Italian</option>
-            <option value="japanese">Japanese</option>
-            <option value="kosher">Kosher</option>
-            <option value="mediterranean">Mediterranean</option>
-            <option value="mexican">Mexican</option>
-            <option value="middle eastern">Middle Eastern</option>
-            <option value="nordic">Nordic</option>
-            <option value="south american">South American</option>
-            <option value="south east asian">South East Asian</option>
-            <option value="world">World</option>
+        <label>Diet Type
+          <select id="diet">
+            <option>Balanced</option>
+            <option>Low-Carb</option>
+            <option>Low-Fat</option>
           </select>
         </label>
 
-        <!-- Row 4 -->
-        <label class="field">
-          <span>Number of Meals</span>
-          <select id="numOfMeals" required>
-            <option value="2">Two</option>
-            <option value="3" selected>Three</option>
-            <option value="5">Five</option>
-          </select>
-        </label>
-
-        <label class="field">
-          <span>Diet Preference</span>
-          <select id="dietPreference" required>
-            <option value="Balanced" selected>Balanced</option>
-            <option value="Low-Carb">Low-Carb</option>
-            <option value="Low-Fat">Low-Fat</option>
-          </select>
-        </label>
-
-        <!-- Row 5 -->
-        <label class="field">
-          <span>Health Specification</span>
-          <select id="healthSpec" required>
+        <label>Preference
+          <select id="spec">
+            <option value="">None</option>
             <option value="vegan">Vegan</option>
             <option value="vegetarian">Vegetarian</option>
-            <option value="non-vegetarian" selected>Non-vegetarian</option>
-            <option value="alcohol-free">Alcohol-free</option>
-            <option value="peanut-free">Peanut-free</option>
+            <option value="alcohol-free">Alcohol-Free</option>
+            <option value="peanut-free">Peanut-Free</option>
           </select>
         </label>
 
-        <label class="field">
-          <span>Quick recipes</span>
+        <label>Cuisine
+          <select id="cuisine">
+            <option value="">Any</option>
+            <option>American</option>
+            <option>Mediterranean</option>
+            <option>Indian</option>
+            <option>Mexican</option>
+            <option>Italian</option>
+            <option>Asian</option>
+          </select>
+        </label>
+
+        <label>Quick meals
           <select id="quickSelect">
             <option value="none" selected>No Time</option>
             <option value="10">10 mins recipes</option>
@@ -135,13 +95,14 @@
 
       <!-- Desktop results table (unchanged) -->
       <div id="results" class="results"></div>
+
       <!-- PDF action (shown after results render) -->
-<div id="pdf-bar" class="pdf-bar no-print hidden">
-  <button id="download-pdf" class="btn" type="button" aria-label="Download PDF">Download PDF</button>
-</div>
+      <div id="pdf-bar" class="pdf-bar no-print hidden">
+        <button id="download-pdf" class="btn" type="button" aria-label="Download PDF">Download PDF</button>
+      </div>
     </section>
   </main>
 
-  <script src="./script.js?v=16"></script>
+  <script src="./script.js?v=17"></script>
 </body>
 </html>
