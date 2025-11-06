@@ -427,9 +427,28 @@ document.addEventListener("DOMContentLoaded", () => {
     document.head.appendChild(style);
   })();
 
-  // Optional hooks (no visual change, just future-proof)
-  window.addEventListener('beforeprint', () => document.documentElement.classList.add('is-print'));
-  window.addEventListener('afterprint', () => document.documentElement.classList.remove('is-print'));
+  // Optional hooks: ensure desktop layout + eager images for print (iOS/desktop)
+window.addEventListener('beforeprint', () => {
+  document.documentElement.classList.add('is-print');
+  const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
+  if (res && mob) { res.hidden = false; mob.hidden = true; }
+  if (tabs) tabs.hidden = true;
+
+  // Force images to load before print
+  document.querySelectorAll('#results img[loading="lazy"]').forEach(img => {
+    try { img.loading = 'eager'; img.decoding = 'sync'; } catch (_) {}
+  });
+});
+
+window.addEventListener('afterprint', () => {
+  document.documentElement.classList.remove('is-print');
+  // Restore view based on screen size
+  const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
+  if (isMobile()) {
+    if (res) res.hidden = true;
+    if (mob) mob.hidden = false;
+    if (tabs) tabs.hidden = false;
+  }
 });
 
 /* === iOS PDF DOWNLOAD FIX (ADD-ONLY) === */
