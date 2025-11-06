@@ -221,6 +221,11 @@ td:first-child{ font-weight:700}
   .form, .day-tabs, .mobile-results, .actions, .title-link, .no-print { display:none !important }
   .results{ display:block !important; overflow:visible !important }
 
+    /* Force desktop table to print even if hidden in mobile UI */
+  #results[hidden] { display: block !important; }
+  #mobile-results { display: none !important; }
+  #day-tabs { display: none !important; }
+
   table{ min-width:0 !important; width:100% !important; table-layout:auto; }
   th, td { font-size:11px; color:#000 !important; }
   th{
