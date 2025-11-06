@@ -25,23 +25,98 @@ function isIOS() {
   return /iP(ad|hone|od)/i.test(navigator.userAgent);
 }
 
-async function downloadAsPDFiOS(targetEl, onStatus) {
+async function downloadAsPDFiOS(targetEl, onStatus, preOpenedWin) {
+  // 1) pick a target; if it's hidden, temporarily show it offscreen
+  const target = targetEl || document.querySelector("#results") || document.body;
+  const wasHiddenAttr = target.hasAttribute?.("hidden");
+  const prevDisplay = target.style.display;
+  const prevPos = target.style.position;
+  const prevLeft = target.style.left;
+  const prevTop = target.style.top;
+
   try {
     onStatus?.("Preparing PDF…");
-    const target = targetEl || document.querySelector("#results") || document.body;
 
+    // make sure the capture node has dimensions
+    if (wasHiddenAttr) target.removeAttribute("hidden");
+    if (getComputedStyle(target).display === "none") target.style.display = "block";
+    // keep it out of view but renderable
+    target.style.position = "absolute";
+    target.style.left = "-99999px";
+    target.style.top = "0";
+
+    // libs
     const h2c = window.html2canvas;
     const jsPDF = window.jspdf?.jsPDF;
     if (!h2c || !jsPDF) { window.print(); return; }
+
+    // IMPORTANT: skip remote images (prevents CORS taint/hangs on iOS)
+    const ignore = (el) => {
+      const tag = el?.tagName;
+      if (!tag) return false;
+      if (tag === "IMG") return true;
+      if (el.classList?.contains("meal-card__img")) return true;
+      if (el.classList?.contains("recipe")) return true;
+      return el.classList?.contains("no-print");
+    };
 
     const scale = Math.min(2, window.devicePixelRatio || 1.5);
     const canvas = await h2c(target, {
       scale,
       backgroundColor: "#ffffff",
       useCORS: true,
-      imageTimeout: 15000,
-      ignoreElements: (el) => el?.classList?.contains("no-print")
+      imageTimeout: 10000,
+      ignoreElements: ignore
     });
+
+    const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const imgW = pageW;
+    const imgH = (canvas.height * imgW) / canvas.width;
+
+    if (imgH <= pageH) {
+      pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, imgW, imgH);
+    } else {
+      const pageCanvas = document.createElement("canvas");
+      const ctx = pageCanvas.getContext("2d");
+      const pageHpx = Math.floor((canvas.width * pageH) / pageW);
+      pageCanvas.width = canvas.width;
+      pageCanvas.height = pageHpx;
+      let y = 0, pageIndex = 0;
+      while (y < canvas.height) {
+        ctx.clearRect(0, 0, pageCanvas.width, pageCanvas.height);
+        ctx.drawImage(canvas, 0, -y, canvas.width, canvas.height);
+        const pageData = pageCanvas.toDataURL("image/jpeg", 0.95);
+        if (pageIndex === 0) pdf.addImage(pageData, "JPEG", 0, 0, imgW, pageH);
+        else { pdf.addPage(); pdf.addImage(pageData, "JPEG", 0, 0, imgW, pageH); }
+        y += pageHpx; pageIndex++;
+      }
+    }
+
+    const blob = pdf.output("blob");
+    const url = URL.createObjectURL(blob);
+
+    // Use the tab we opened synchronously from the click handler
+    if (preOpenedWin && !preOpenedWin.closed) {
+      preOpenedWin.location = url;
+    } else {
+      const a = document.createElement("a");
+      a.href = url; a.target = "_blank"; a.rel = "noopener";
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+  } finally {
+    // restore target visibility/state
+    if (wasHiddenAttr) target.setAttribute("hidden", "");
+    target.style.display = prevDisplay;
+    target.style.position = prevPos;
+    target.style.left = prevLeft;
+    target.style.top = prevTop;
+    onStatus?.("");
+  }
+}
 
     const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     const pageW = pdf.internal.pageSize.getWidth();
@@ -363,7 +438,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   $('home-reset')?.addEventListener('click', resetAll);
 
-  // Print / PDF handler (REPLACE)
+ // Print / PDF handler (iOS-safe)
 document.addEventListener('click', async (ev) => {
   const btn = ev.target.closest('#download-pdf');
   if (!btn) return;
@@ -376,12 +451,14 @@ document.addEventListener('click', async (ev) => {
     if (!msg) { statusEl.textContent = ""; statusEl.classList.remove("show"); return; }
     statusEl.textContent = msg; statusEl.classList.add("show");
   };
-
   const resultsEl = document.getElementById('results');
 
   if (isIOS()) {
-    // iPhone/iPad → generate real PDF and open it in a new tab
-    await downloadAsPDFiOS(resultsEl, setStatus).catch(() => { try { window.print(); } catch(_) {} });
+    // Open a blank tab immediately (user gesture) to avoid iOS popup blocking
+    const win = window.open('about:blank', '_blank', 'noopener');
+    await downloadAsPDFiOS(resultsEl, setStatus, win).catch(() => {
+      try { if (win && !win.closed) win.close(); } catch(_) {}
+    });
   } else {
     // Desktop/Android → keep the fast print-to-PDF flow
     try { window.print(); } catch (_) {}
