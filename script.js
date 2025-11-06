@@ -427,7 +427,10 @@ document.addEventListener("DOMContentLoaded", () => {
 (function () {
   // detect iOS
   function isIOS() {
-    return /iP(ad|hone|od)/i.test(navigator.userAgent);
+    const ua = navigator.userAgent;
+    const iOS = /iP(ad|hone|od)/i.test(ua);
+    const iPadOS13 = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+    return iOS || iPadOS13;
   }
 
   // load an image as dataURL so html2canvas can use it safely
@@ -476,9 +479,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (data) img.src = data;
     }
 
-    // open a blank tab now (Safari gesture-safe)
-    const newTab = window.open("about:blank", "_blank", "noopener");
-
     const h2c = window.html2canvas;
     const jsPDF = window.jspdf?.jsPDF;
     if (!h2c || !jsPDF) {
@@ -509,8 +509,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const blob = pdf.output("blob");
     const url = URL.createObjectURL(blob);
 
-    // load the pdf in the already-opened tab
-    newTab.location.href = url;
+    // iOS Safari: open PDF in the same tab
+    window.location.href = url;
 
     setTimeout(() => {
       URL.revokeObjectURL(url);
@@ -518,7 +518,7 @@ document.addEventListener("DOMContentLoaded", () => {
         status.textContent = "";
         status.classList.remove("show");
       }
-    }, 5000);
+    }, 60000);
   }
 
   // attach a new listener without touching the old one
