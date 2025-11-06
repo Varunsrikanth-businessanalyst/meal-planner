@@ -550,10 +550,11 @@ window.addEventListener('afterprint', () => {
   }
 
   // attach a new listener without touching the old one
-    document.addEventListener("click", function (ev) {
+     document.addEventListener("click", function (ev) {
     const btn = ev.target.closest("#download-pdf");
     if (!btn) return;
     if (!isIOS()) return; // desktop/Android keep existing flow
     // Let iOS use native print → PDF (best quality, no CORS issues)
     try { window.print(); } catch (_) {}
   });
+})();
