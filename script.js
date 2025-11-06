@@ -422,3 +422,112 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener('beforeprint', () => document.documentElement.classList.add('is-print'));
   window.addEventListener('afterprint', () => document.documentElement.classList.remove('is-print'));
 });
+
+/* === iOS PDF DOWNLOAD FIX (ADD-ONLY) === */
+(function () {
+  // detect iOS
+  function isIOS() {
+    return /iP(ad|hone|od)/i.test(navigator.userAgent);
+  }
+
+  // load an image as dataURL so html2canvas can use it safely
+  async function toDataURL(img) {
+    return new Promise((resolve) => {
+      try {
+        const image = new Image();
+        image.crossOrigin = "anonymous";
+        image.onload = function () {
+          const canvas = document.createElement("canvas");
+          canvas.width = this.naturalWidth;
+          canvas.height = this.naturalHeight;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(this, 0, 0);
+          resolve(canvas.toDataURL("image/png"));
+        };
+        image.onerror = () => resolve(null);
+        image.src = img.src;
+      } catch {
+        resolve(null);
+      }
+    });
+  }
+
+  // capture visible section (mobile or desktop)
+  async function generatePDFforiOS() {
+    const target =
+      document.querySelector("#mobile-results:not([hidden])") ||
+      document.querySelector("#results");
+
+    if (!target) {
+      alert("No meal plan to export yet.");
+      return;
+    }
+
+    const status = document.getElementById("status");
+    if (status) {
+      status.textContent = "Preparing PDF…";
+      status.classList.add("show");
+    }
+
+    // convert all external images to data URLs (avoid CORS blocking)
+    const imgs = target.querySelectorAll("img");
+    for (const img of imgs) {
+      const data = await toDataURL(img);
+      if (data) img.src = data;
+    }
+
+    // open a blank tab now (Safari gesture-safe)
+    const newTab = window.open("about:blank", "_blank", "noopener");
+
+    const h2c = window.html2canvas;
+    const jsPDF = window.jspdf?.jsPDF;
+    if (!h2c || !jsPDF) {
+      alert("PDF engine missing.");
+      return;
+    }
+
+    const canvas = await h2c(target, {
+      backgroundColor: "#fff",
+      scale: 2,
+      useCORS: true,
+      imageTimeout: 10000,
+    });
+
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "pt",
+      format: "a4",
+    });
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const ratio = Math.min(pageWidth / canvas.width, pageHeight / canvas.height);
+    const imgW = canvas.width * ratio;
+    const imgH = canvas.height * ratio;
+
+    pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, imgW, imgH);
+    const blob = pdf.output("blob");
+    const url = URL.createObjectURL(blob);
+
+    // load the pdf in the already-opened tab
+    newTab.location.href = url;
+
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      if (status) {
+        status.textContent = "";
+        status.classList.remove("show");
+      }
+    }, 5000);
+  }
+
+  // attach a new listener without touching the old one
+  document.addEventListener("click", function (ev) {
+    const btn = ev.target.closest("#download-pdf");
+    if (!btn) return;
+    if (!isIOS()) return; // desktop/Android use original flow
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    generatePDFforiOS();
+  });
+})();
