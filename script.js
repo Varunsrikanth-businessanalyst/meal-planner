@@ -241,6 +241,12 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener('click', (ev) => {
     const btn = ev.target.closest('#download-pdf');
     if (!btn) return;
+    // Skip here on iOS — handled by the iOS-specific listener below
+  if (/iP(ad|hone|od)/i.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+    return;
+  }
+    
     ev.preventDefault();
     btn.blur();
     try { window.print(); } catch (_) {}
@@ -384,6 +390,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const css = `
       @page { size: A4 landscape; margin: 10mm; }
       @media print {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+
         html, body { background: #fff !important; width: 100% !important; overflow: visible !important; }
         /* Remove shadows/background effects to avoid widening the layout */
         .card { box-shadow: none !important; backdrop-filter: none !important; background: #fff !important; }
@@ -522,12 +531,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // attach a new listener without touching the old one
-  document.addEventListener("click", function (ev) {
+    document.addEventListener("click", function (ev) {
     const btn = ev.target.closest("#download-pdf");
     if (!btn) return;
-    if (!isIOS()) return; // desktop/Android use original flow
-    ev.preventDefault();
-    ev.stopImmediatePropagation();
-    generatePDFforiOS();
+    if (!isIOS()) return; // desktop/Android keep existing flow
+    // Let iOS use native print → PDF (best quality, no CORS issues)
+    try { window.print(); } catch (_) {}
   });
-})();
