@@ -83,6 +83,69 @@ async function downloadAsPDFiOS(targetEl, onStatus) {
   }
 }
 
+// --- iOS detection + PDF generator (ADD) ---
+function isIOS() {
+  return /iP(ad|hone|od)/i.test(navigator.userAgent);
+}
+
+async function downloadAsPDFiOS(targetEl, onStatus) {
+  try {
+    onStatus?.("Preparing PDF…");
+    const target = targetEl || document.querySelector("#results") || document.body;
+
+    const h2c = window.html2canvas;
+    const jsPDF = window.jspdf?.jsPDF;
+    if (!h2c || !jsPDF) { window.print(); return; }
+
+    const scale = Math.min(2, window.devicePixelRatio || 1.5);
+    const canvas = await h2c(target, {
+      scale,
+      backgroundColor: "#ffffff",
+      useCORS: true,
+      imageTimeout: 15000,
+      ignoreElements: (el) => el?.classList?.contains("no-print")
+    });
+
+    const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const imgW = pageW;
+    const imgH = (canvas.height * imgW) / canvas.width;
+
+    if (imgH <= pageH) {
+      pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, imgW, imgH);
+    } else {
+      const pageCanvas = document.createElement("canvas");
+      const ctx = pageCanvas.getContext("2d");
+      const pageHpx = Math.floor((canvas.width * pageH) / pageW);
+      pageCanvas.width = canvas.width;
+      pageCanvas.height = pageHpx;
+      let y = 0, pageIndex = 0;
+      while (y < canvas.height) {
+        ctx.clearRect(0, 0, pageCanvas.width, pageCanvas.height);
+        ctx.drawImage(canvas, 0, -y, canvas.width, canvas.height);
+        const pageData = pageCanvas.toDataURL("image/jpeg", 0.95);
+        if (pageIndex === 0) pdf.addImage(pageData, "JPEG", 0, 0, imgW, pageH);
+        else { pdf.addPage(); pdf.addImage(pageData, "JPEG", 0, 0, imgW, pageH); }
+        y += pageHpx; pageIndex++;
+      }
+    }
+
+    const blob = pdf.output("blob");
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  } finally {
+    onStatus?.("");
+  }
+}
+
 // ------- Map UI to Edamam params -------
 function mapDiet(d) {
   return ({ "Balanced":"balanced", "Low-Carb":"low-carb", "Low-Fat":"low-fat" }[d]) || "";
