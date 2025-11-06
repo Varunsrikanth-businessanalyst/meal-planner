@@ -254,21 +254,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ✅ ADD-ONLY: make the button responsive on iPhone (touchend/pointerup)
   if (pdfBtn) {
-    const ensureDesktopView = () => {
-      const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
-      if (res) res.hidden = false;
-      if (mob) mob.hidden = true;
-      if (tabs) tabs.hidden = true;
-    };
-    const triggerPrint = (e) => {
-      if (e) e.preventDefault();
-      ensureDesktopView();
-      try { window.print(); } catch (_) {}
-    };
-    pdfBtn.addEventListener('touchend', triggerPrint, { passive: false });
-    pdfBtn.addEventListener('pointerup', triggerPrint);
-    pdfBtn.addEventListener('click', triggerPrint);
-  }
+  const ensureDesktopView = () => {
+    const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
+    if (res) res.hidden = false;
+    if (mob) mob.hidden = true;
+    if (tabs) tabs.hidden = true;
+  };
+
+  const triggerPrint = (e) => {
+    if (e) e.preventDefault();
+    ensureDesktopView();
+    try { window.focus(); } catch (_) {}
+    try { window.print(); } catch (_) {}
+  };
+
+  // Add multiple user-gesture signals for Chrome reliability
+  ['click', 'pointerup', 'touchend', 'mousedown', 'keyup'].forEach(evt => {
+    pdfBtn.addEventListener(evt, (e) => {
+      if (evt === 'keyup' && e.key !== 'Enter') return;
+      triggerPrint(e);
+    }, { passive: false });
+  });
+}
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -402,44 +409,55 @@ document.addEventListener("DOMContentLoaded", () => {
     card.insertAdjacentElement("afterend", dm);
   }
 
-  // ---------- PRINT PDF fit fixes (APPENDED only; nothing above changed) ----------
-  (function injectPrintFixes(){
-    const css = `
-      @page { size: A4 landscape; margin: 10mm; }
-      @media print {
-        html, body { background: #fff !important; width: 100% !important; overflow: visible !important; }
-        /* Remove shadows/background effects to avoid widening the layout */
-        .card { box-shadow: none !important; backdrop-filter: none !important; background: #fff !important; }
+ // ---------- PRINT PDF fit fixes (APPENDED only; nothing above changed) ----------
+(function injectPrintFixes(){
+  const css = `
+    @page { size: A4 landscape; margin: 10mm; }
+    @media print {
+      html, body { background: #fff !important; width: 100% !important; overflow: visible !important; }
+      /* Remove shadows/background effects to avoid widening the layout */
+      .card { box-shadow: none !important; backdrop-filter: none !important; background: #fff !important; }
 
-        /* Hide interactive chrome in print */
-        #day-tabs, #mobile-results, #pdf-bar, #download-pdf { display: none !important; }
+      /* Hide interactive chrome in print */
+      #day-tabs, #mobile-results, #pdf-bar, #download-pdf { display: none !important; }
 
-        /* Fit weekly grid to page width */
-        #results { overflow: visible !important; }
-        #results table { width: 100% !important; table-layout: fixed !important; border-collapse: collapse !important; }
+      /* Fit weekly grid to page width */
+      #results { overflow: visible !important; }
+      #results table { width: 100% !important; table-layout: fixed !important; border-collapse: collapse !important; }
 
-        /* Critical: allow columns to shrink & wrap so the right edge isn't cut */
-        #results th, #results td {
-          min-width: 0 !important; width: auto !important;
-          word-wrap: break-word !important; overflow-wrap: anywhere !important;
-          padding: 6px !important; font-size: 11px !important; line-height: 1.35 !important; color: #000 !important;
-        }
-
-        /* Keep header visible, no sticky positioning in print */
-        #results th { position: static !important; background: #fff !important; }
-
-        /* Images scale inside cells */
-        img.recipe, .meal-card__img { max-width: 100% !important; height: auto !important; max-height: 140px !important; object-fit: cover !important; }
-
-        /* Avoid mid-row breaks */
-        tr, td, img.recipe { page-break-inside: avoid !important; }
+      /* Critical: allow columns to shrink & wrap so the right edge isn't cut */
+      #results th, #results td {
+        min-width: 0 !important; width: auto !important;
+        word-wrap: break-word !important; overflow-wrap: anywhere !important;
+        padding: 6px !important; font-size: 11px !important; line-height: 1.35 !important; color: #000 !important;
       }
-    `;
-    const style = document.createElement("style");
-    style.id = "print-fixes";
-    style.textContent = css;
-    document.head.appendChild(style);
-  })();
+
+      /* Keep header visible, no sticky positioning in print */
+      #results th { position: static !important; background: #fff !important; }
+
+      /* Images scale inside cells */
+      img.recipe, .meal-card__img { max-width: 100% !important; height: auto !important; max-height: 140px !important; object-fit: cover !important; }
+
+      /* Avoid mid-row breaks */
+      tr, td, img.recipe { page-break-inside: avoid !important; }
+
+      /* --- Added to keep PDF compact and clean --- */
+
+      /* Hide ingredients lists in print to keep PDF compact */
+      #results ul, .day-section ul { display: none !important; }
+
+      /* Slightly tighter table for print (override earlier padding/font-size) */
+      #results th, #results td { padding: 4px !important; font-size: 10px !important; }
+
+      /* Keep images smaller so rows aren't tall */
+      img.recipe, .meal-card__img { max-height: 100px !important; }
+    }
+  `;
+  const style = document.createElement("style");
+  style.id = "print-fixes";
+  style.textContent = css;
+  document.head.appendChild(style);
+})();
 
   // Optional hooks (keep simple, add-only): ensure proper view + eager images
   window.addEventListener('beforeprint', () => {
