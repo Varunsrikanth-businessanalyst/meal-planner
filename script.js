@@ -241,12 +241,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener('click', (ev) => {
     const btn = ev.target.closest('#download-pdf');
     if (!btn) return;
-    // Skip here on iOS — handled by the iOS-specific listener below
-  if (/iP(ad|hone|od)/i.test(navigator.userAgent) ||
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
-    return;
-  }
-    
     ev.preventDefault();
     btn.blur();
     try { window.print(); } catch (_) {}
@@ -390,9 +384,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const css = `
       @page { size: A4 landscape; margin: 10mm; }
       @media print {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-
         html, body { background: #fff !important; width: 100% !important; overflow: visible !important; }
         /* Remove shadows/background effects to avoid widening the layout */
         .card { box-shadow: none !important; backdrop-filter: none !important; background: #fff !important; }
@@ -427,134 +418,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.head.appendChild(style);
   })();
 
-  // Optional hooks: ensure desktop layout + eager images for print (iOS/desktop)
-window.addEventListener('beforeprint', () => {
-  document.documentElement.classList.add('is-print');
-  const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
-  if (res && mob) { res.hidden = false; mob.hidden = true; }
-  if (tabs) tabs.hidden = true;
-
-  // Force images to load before print
-  document.querySelectorAll('#results img[loading="lazy"]').forEach(img => {
-    try { img.loading = 'eager'; img.decoding = 'sync'; } catch (_) {}
-  });
+  // Optional hooks (no visual change, just future-proof)
+  window.addEventListener('beforeprint', () => document.documentElement.classList.add('is-print'));
+  window.addEventListener('afterprint', () => document.documentElement.classList.remove('is-print'));
 });
-
-window.addEventListener('afterprint', () => {
-  document.documentElement.classList.remove('is-print');
-  // Restore view based on screen size
-  const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
-  if (isMobile()) {
-    if (res) res.hidden = true;
-    if (mob) mob.hidden = false;
-    if (tabs) tabs.hidden = false;
-  }
-});
-
-/* === iOS PDF DOWNLOAD FIX (ADD-ONLY) === */
-(function () {
-  // detect iOS
-  function isIOS() {
-    const ua = navigator.userAgent;
-    const iOS = /iP(ad|hone|od)/i.test(ua);
-    const iPadOS13 = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-    return iOS || iPadOS13;
-  }
-
-  // load an image as dataURL so html2canvas can use it safely
-  async function toDataURL(img) {
-    return new Promise((resolve) => {
-      try {
-        const image = new Image();
-        image.crossOrigin = "anonymous";
-        image.onload = function () {
-          const canvas = document.createElement("canvas");
-          canvas.width = this.naturalWidth;
-          canvas.height = this.naturalHeight;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(this, 0, 0);
-          resolve(canvas.toDataURL("image/png"));
-        };
-        image.onerror = () => resolve(null);
-        image.src = img.src;
-      } catch {
-        resolve(null);
-      }
-    });
-  }
-
-  // capture visible section (mobile or desktop)
-  async function generatePDFforiOS() {
-    const target =
-      document.querySelector("#mobile-results:not([hidden])") ||
-      document.querySelector("#results");
-
-    if (!target) {
-      alert("No meal plan to export yet.");
-      return;
-    }
-
-    const status = document.getElementById("status");
-    if (status) {
-      status.textContent = "Preparing PDF…";
-      status.classList.add("show");
-    }
-
-    // convert all external images to data URLs (avoid CORS blocking)
-    const imgs = target.querySelectorAll("img");
-    for (const img of imgs) {
-      const data = await toDataURL(img);
-      if (data) img.src = data;
-    }
-
-    const h2c = window.html2canvas;
-    const jsPDF = window.jspdf?.jsPDF;
-    if (!h2c || !jsPDF) {
-      alert("PDF engine missing.");
-      return;
-    }
-
-    const canvas = await h2c(target, {
-      backgroundColor: "#fff",
-      scale: 2,
-      useCORS: true,
-      imageTimeout: 10000,
-    });
-
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "pt",
-      format: "a4",
-    });
-
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const ratio = Math.min(pageWidth / canvas.width, pageHeight / canvas.height);
-    const imgW = canvas.width * ratio;
-    const imgH = canvas.height * ratio;
-
-    pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, imgW, imgH);
-    const blob = pdf.output("blob");
-    const url = URL.createObjectURL(blob);
-
-    // iOS Safari: open PDF in the same tab
-    window.location.href = url;
-
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-      if (status) {
-        status.textContent = "";
-        status.classList.remove("show");
-      }
-    }, 60000);
-  }
-
-  // attach a new listener without touching the old one
-     document.addEventListener("click", function (ev) {
-    const btn = ev.target.closest("#download-pdf");
-    if (!btn) return;
-    if (!isIOS()) return; // desktop/Android keep existing flow
-    // Let iOS use native print → PDF (best quality, no CORS issues)
-    try { window.print(); } catch (_) {}
-  });
-})();
