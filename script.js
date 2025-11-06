@@ -213,6 +213,30 @@ document.addEventListener("DOMContentLoaded", () => {
   const pdfBtn = $('download-pdf');
   const pdfBar = $('pdf-bar');
 
+  // --- Reliable Print Handler for iPhone + Desktop ---
+if (pdfBtn) {
+  const once = (fn) => (...a) => {
+    if (window.__printing) return;
+    window.__printing = true;
+    try { fn(...a); } finally { setTimeout(() => (window.__printing = false), 1500); }
+  };
+
+  const showTableThenPrint = once(() => {
+    // Ensure desktop table is visible before print
+    const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
+    if (res) res.hidden = false;
+    if (mob) mob.hidden = true;
+    if (tabs) tabs.hidden = true;
+
+    try { window.print(); } catch (_) {}
+  });
+
+  // iOS sometimes drops click — use touchend/pointerup too
+  pdfBtn.addEventListener('touchend', (e) => { e.preventDefault(); showTableThenPrint(); }, { passive: false });
+  pdfBtn.addEventListener('pointerup', (e) => { e.preventDefault(); showTableThenPrint(); });
+  pdfBtn.addEventListener('click', (e) => { e.preventDefault(); showTableThenPrint(); });
+}
+  
   const setStatus = (msg) => {
     if (!statusEl) return;
     if (!msg) { statusEl.textContent = ""; statusEl.classList.remove("show"); return; }
