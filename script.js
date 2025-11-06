@@ -202,19 +202,6 @@ function renderMobile(grid, dayIndex = 0) {
   });
 }
 
-/* === NEW: helpers for phone print (Option A) === */
-function printDayHTML(dayIndex, grid) {
-  const meals = grid.map((row, rIdx) => cardHTML(row[dayIndex], rIdx)).join("");
-  return `
-    <section class="print-day">
-      <h2 class="print-day__title">${WEEKDAYS[dayIndex]}</h2>
-      <div class="print-day__cards">${meals}</div>
-    </section>`;
-}
-function buildPrintStackHTML(grid) {
-  return WEEKDAYS.map((_, i) => printDayHTML(i, grid)).join("");
-}
-
 // ------- main -------
 document.addEventListener("DOMContentLoaded", () => {
   const form = $('meal-form');
@@ -226,30 +213,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const pdfBtn = $('download-pdf');
   const pdfBar = $('pdf-bar');
 
-  // --- Reliable Print Handler for iPhone + Desktop ---
-if (pdfBtn) {
-  const once = (fn) => (...a) => {
-    if (window.__printing) return;
-    window.__printing = true;
-    try { fn(...a); } finally { setTimeout(() => (window.__printing = false), 1500); }
-  };
-
-  const showTableThenPrint = once(() => {
-    // Ensure desktop table is visible before print
-    const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
-    if (res) res.hidden = false;
-    if (mob) mob.hidden = true;
-    if (tabs) tabs.hidden = true;
-
-    try { window.print(); } catch (_) {}
-  });
-
-  // iOS sometimes drops click — use touchend/pointerup too
-  pdfBtn.addEventListener('touchend', (e) => { e.preventDefault(); showTableThenPrint(); }, { passive: false });
-  pdfBtn.addEventListener('pointerup', (e) => { e.preventDefault(); showTableThenPrint(); });
-  pdfBtn.addEventListener('click', (e) => { e.preventDefault(); showTableThenPrint(); });
-}
-  
   const setStatus = (msg) => {
     if (!statusEl) return;
     if (!msg) { statusEl.textContent = ""; statusEl.classList.remove("show"); return; }
@@ -276,28 +239,12 @@ if (pdfBtn) {
 
   // Print handler
   document.addEventListener('click', (ev) => {
-  const btn = ev.target.closest('#download-pdf');
-  if (!btn) return;
-
-  // NEW guard to avoid double dialogs if a direct handler already fired
-  if (window.__printing) return;
-
-  // iOS is handled by the iOS-specific listener; skip here
-  if (/iP(ad|hone|od)/i.test(navigator.userAgent) ||
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
-    return;
-  }
-
-  // Ensure desktop table is visible for printing
-  const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
-  if (res) res.hidden = false;
-  if (mob) mob.hidden = true;
-  if (tabs) tabs.hidden = true;
-
-  ev.preventDefault();
-  btn.blur();
-  try { window.print(); } catch (_) {}
-  setTimeout(() => { try { window.print(); } catch (_) {} }, 0);
+    const btn = ev.target.closest('#download-pdf');
+    if (!btn) return;
+    ev.preventDefault();
+    btn.blur();
+    try { window.print(); } catch (_) {}
+    setTimeout(() => { try { window.print(); } catch (_) {} }, 0);
   });
 
   form.addEventListener("submit", async (e) => {
@@ -370,7 +317,6 @@ if (pdfBtn) {
       }
 
       const grid = buildWeeklyPlanFromPools(pools);
-      window.__mealGrid = grid;  // for print (Option A)
 
       if (isMobile()) {
         resultsEl.hidden = true;
@@ -464,14 +410,6 @@ if (pdfBtn) {
 
         /* Avoid mid-row breaks */
         tr, td, img.recipe { page-break-inside: avoid !important; }
-
-        /* === NEW: styles for phone print stack (Option A) === */
-        #print-stack { display: block !important; }
-        #print-stack .print-day { page-break-after: always; break-after: page; margin: 0 0 12mm; }
-        #print-stack .print-day:last-child { page-break-after: auto; break-after: auto; }
-        #print-stack .print-day__title { font-size: 18px; font-weight: 700; margin: 0 0 6px; color:#000 !important; }
-        #print-stack .meal-card { break-inside: avoid; page-break-inside: avoid; margin-bottom: 8px; }
-        #print-stack .meal-card__img { max-width: 100% !important; height: auto !important; }
       }
     `;
     const style = document.createElement("style");
@@ -480,50 +418,7 @@ if (pdfBtn) {
     document.head.appendChild(style);
   })();
 
- // Optional hooks: print behavior
-window.addEventListener('beforeprint', () => {
-  document.documentElement.classList.add('is-print');
-
-  // Always make images eager before printing
-  document.querySelectorAll('img[loading="lazy"]').forEach(img => {
-    try { img.loading = 'eager'; img.decoding = 'sync'; } catch (_) {}
-  });
-
-  const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
-
-  // Option A: On phones, print day-cards (one day per page)
-  if (isMobile() && window.__mealGrid) {
-    if (res) res.hidden = true;
-    if (tabs) tabs.hidden = true;
-    if (mob)  mob.hidden = true;
-
-    let stack = document.getElementById('print-stack');
-    if (!stack) {
-      stack = document.createElement('div');
-      stack.id = 'print-stack';
-      document.body.appendChild(stack);
-    }
-    stack.innerHTML = buildPrintStackHTML(window.__mealGrid);
-    stack.hidden = false;
-
-  } else {
-    if (res) res.hidden = false;
-    if (tabs) tabs.hidden = true;
-    if (mob)  mob.hidden = true;
-  }
-});
-
-window.addEventListener('afterprint', () => {
-  document.documentElement.classList.remove('is-print');
-  const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
-  const stack = document.getElementById('print-stack');
-  if (stack) { stack.hidden = true; }
-
-  if (isMobile()) {
-    if (res) res.hidden = true;
-    if (mob) mob.hidden = false;
-    if (tabs) tabs.hidden = false;
-  } else {
-    if (res) res.hidden = false;
-  }
+  // Optional hooks (no visual change, just future-proof)
+  window.addEventListener('beforeprint', () => document.documentElement.classList.add('is-print'));
+  window.addEventListener('afterprint', () => document.documentElement.classList.remove('is-print'));
 });
