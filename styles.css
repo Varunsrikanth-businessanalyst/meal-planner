@@ -272,3 +272,57 @@ td:first-child{ font-weight:700}
     background-repeat: repeat-y !important;     /* ensures full scroll coverage */
   }
 }
+
+/* ===================================================== */
+/* ====== APPEND-ONLY: PRINT TWEAKS FOR PHONE STACK ===== */
+/* ===================================================== */
+
+/* Always show dish names in print and remove white link color */
+@media print {
+  a, .meal-card__link { color:#000 !important; text-decoration:none !important; }
+}
+
+/* Hide ingredients everywhere in print (desktop table & mobile views) */
+@media print {
+  #results ul, .day-section ul, #print-stack ul { display:none !important; }
+}
+
+/* Phone “day-per-page” stack (built by JS) */
+@media print {
+  /* Only has effect when the JS adds #print-stack for mobile */
+  #print-stack { display:block !important; width:100%; }
+
+  /* Each day is its own page */
+  #print-stack .print-day{
+    page-break-after: always;
+    break-after: page;
+    padding:8px 0 12px;
+  }
+  #print-stack .print-day:last-of-type{
+    page-break-after: avoid;
+    break-after: avoid-page;
+  }
+
+  /* Day heading */
+  #print-stack .print-day__heading{
+    font-size:16px; font-weight:800; margin:0 0 6px; color:#000;
+  }
+
+  /* Meal cards on phone print */
+  .print-card{ margin:8px 0 14px; }
+  .print-card__img{
+    width:100%; height:auto; max-height:280px; object-fit:cover; display:block;
+    border:1px solid #ddd; border-radius:6px;
+  }
+  .print-card__title{ font-weight:700; font-size:14px; margin:6px 0 2px; color:#000; }
+  .print-card__meta{ font-size:12px; opacity:.85; margin-bottom:4px; color:#000; }
+  .print-card__macros .chip{
+    font-size:11px; margin-right:6px; border-color:#bbb; color:#000;
+  }
+
+  /* Footer should appear once at the end of the stack */
+  .print-footer{
+    display:block; margin-top:8px; text-align:center; font-size:12px; opacity:.85; color:#000;
+  }
+  .print-footer__dm{ display:block; margin-top:2px; }
+}
