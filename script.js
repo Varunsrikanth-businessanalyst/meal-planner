@@ -239,12 +239,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Print handler
   document.addEventListener('click', (ev) => {
-    const btn = ev.target.closest('#download-pdf');
-    if (!btn) return;
-    ev.preventDefault();
-    btn.blur();
-    try { window.print(); } catch (_) {}
-    setTimeout(() => { try { window.print(); } catch (_) {} }, 0);
+  const btn = ev.target.closest('#download-pdf');
+  if (!btn) return;
+
+  // iOS is handled by the iOS-specific listener; skip here
+  if (/iP(ad|hone|od)/i.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+    return;
+  }
+
+  // Ensure desktop table is visible for printing
+  const res = $('results'), mob = $('mobile-results'), tabs = $('day-tabs');
+  if (res) res.hidden = false;
+  if (mob) mob.hidden = true;
+  if (tabs) tabs.hidden = true;
+
+  ev.preventDefault();
+  btn.blur();
+  try { window.print(); } catch (_) {}
+  setTimeout(() => { try { window.print(); } catch (_) {} }, 0);
   });
 
   form.addEventListener("submit", async (e) => {
